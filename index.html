@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="AthleteOS"/>
+  <meta name="theme-color" content="#080810"/>
+  <meta name="description" content="CrossFit training tracker with 16-week periodized plan"/>
+  <link rel="manifest" href="./manifest.json"/>
+  <link rel="apple-touch-icon" href="./icon-192.png"/>
+  <title>AthleteOS</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; background: #080810; color: #fff; overflow-x: hidden; }
+    #root { min-height: 100%; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script type="text/babel" data-presets="react">
+
+const FONT = `@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800;900&family=Barlow:wght@300;400;500;600&display=swap');`;
+
+// ── PLAN CONSTANTS ───────────────────────────────────────────────────────────
+
+const CURRENT_WEEK = 37;
+
+const MESOS = [
+  { id: 1, name: "Accumulation",    weeks: [37,38,39,40], color: "#00b4ff", desc: "Volume base. Higher reps, 70–75% Olympic, longer metcons." },
+  { id: 2, name: "Intensification", weeks: [41,42,43,44], color: "#a855f7", desc: "Less volume, more intensity. 2–4 rep strength, 80–85% Olympic." },
+  { id: 3, name: "Peaking",         weeks: [45,46,47,48], color: "#ff6b35", desc: "Heavy singles. Olympic PRs targeted. Short sharp metcons." },
+  { id: 4, name: "Realization",     weeks: [49,50,51,52], color: "#4ade80", desc: "W51 test week. W52 full deload. Reassess all PRs." },
+];
+
+// ── PERIODIZED WORKOUTS ───────────────────────────────────────────────────────
+
+const PLAN_WORKOUTS = {
+  1: [
+    {
+      id:"D1", name:"Day 1 — Snatch + Squat", focus:["Olympic","Legs"],
+      exercises:[
+        {name:"Hang Squat Snatch",   muscle:"Olympic",       sets:5,  reps:3,    note:"5×3 @65–70% (~36–39kg) — positional focus", pct:68, type:"ramp"},
+        {name:"Front Squat",         muscle:"Quads",         sets:5,  reps:6,    note:"5×6 @80% (~108kg) — volume block", pct:80, type:"fixed"},
+        {name:"Single-Leg RDL",      muscle:"Hamstrings",    sets:3,  reps:10,   note:"3×10/side — DB, slow eccentric", type:"fixed"},
+        {name:"EMOM 15 — Bike/Lunges/Burpee", muscle:"Conditioning", sets:15, reps:null, note:"Min1: 14cal bike | Min2: 12 alt lunges | Min3: 10 burpees", type:"emom"},
+      ],
+    },
+    {
+      id:"D2", name:"Day 2 — Bench + Press", focus:["Chest","Shoulders"],
+      exercises:[
+        {name:"Bench Press — Heavy 6",  muscle:"Chest",      sets:1, reps:6,  note:"Heavy 6 (~100–105kg)", type:"ramp"},
+        {name:"Bench Press — Back-off", muscle:"Chest",      sets:3, reps:6,  note:"3×6 @90% of heavy 6", type:"fixed"},
+        {name:"Push Press",             muscle:"Shoulders",  sets:5, reps:5,  note:"5×5 @75–80% (~60–64kg)", pct:78, type:"fixed"},
+        {name:"DB Strict Press",        muscle:"Shoulders",  sets:3, reps:12, note:"Accessory — full ROM", type:"fixed"},
+        {name:"AMRAP 20 — Ski/TTB/Row", muscle:"Conditioning", sets:1, reps:null, note:"AMRAP20: 20cal ski + 15 TTB + 20cal row", type:"amrap"},
+      ],
+    },
+    {
+      id:"D3", name:"Day 3 — C&J + Deadlift", focus:["Olympic","Back"],
+      exercises:[
+        {name:"Clean & Jerk Complex", muscle:"Olympic",          sets:4, reps:null, note:"4 sets: 3 clean + 2 jerk @70–75% (~80–86kg)", pct:72, type:"ramp"},
+        {name:"Deadlift",             muscle:"Posterior Chain",  sets:5, reps:5,    note:"5×5 @75% (~135kg) — no belt", pct:75, type:"fixed"},
+        {name:"GHD Hip Extension",    muscle:"Hamstrings",       sets:3, reps:12,   note:"Slow, controlled — posterior chain acc", type:"fixed"},
+        {name:"5 Rounds — Bike/Box/PC", muscle:"Conditioning",  sets:5, reps:null,  note:"12cal bike + 10 box jumps @60cm + 5 PC @50kg", type:"fortime"},
+      ],
+    },
+    {
+      id:"D4", name:"Day 4 — Press + Pull", focus:["Shoulders","Back"],
+      exercises:[
+        {name:"Strict Press — Heavy 6",  muscle:"Shoulders", sets:1, reps:6,  note:"Heavy 6 (~62–65kg)", type:"ramp"},
+        {name:"Strict Press — Back-off", muscle:"Shoulders", sets:3, reps:6,  note:"3×6 @90% of heavy 6", type:"fixed"},
+        {name:"Weighted Pull-ups",        muscle:"Back",     sets:5, reps:5,  note:"5×5 @10–12kg added", type:"fixed"},
+        {name:"Toes-to-Bar",             muscle:"Core",      sets:4, reps:12, note:"Strict — anti-flexion", type:"fixed"},
+        {name:"EMOM 20 — Row/STO/C2B",    muscle:"Conditioning", sets:20, reps:null, note:"Min1: 15cal row | Min2: 5 STO @50kg | Min3: 5 C2B pull-ups | Min4: rest", type:"emom"},
+      ],
+    },
+  ],
+  2: [
+    {
+      id:"D1", name:"Day 1 — Snatch + Squat", focus:["Olympic","Legs"],
+      exercises:[
+        {name:"Hang Power Snatch",  muscle:"Olympic",    sets:8, reps:2, note:"8×2 @75–80% (~42–45kg) — speed focus", pct:78, type:"ramp"},
+        {name:"Front Squat",        muscle:"Quads",      sets:4, reps:4, note:"4×4 @87% (~117kg)", pct:87, type:"fixed"},
+        {name:"Single-Leg RDL",     muscle:"Hamstrings", sets:3, reps:8, note:"3×8/side — heavier DB", type:"fixed"},
+        {name:"EMOM 12 — Bike/Burpee/DL", muscle:"Conditioning", sets:12, reps:null, note:"Min1: 12cal bike | Min2: 8 burpees | Min3: 3×DL @105kg", type:"emom"},
+      ],
+    },
+    {
+      id:"D2", name:"Day 2 — Bench + Press", focus:["Chest","Shoulders"],
+      exercises:[
+        {name:"Bench Press — Heavy 4",  muscle:"Chest",     sets:1, reps:4,  note:"Heavy 4 (~108–112kg)", type:"ramp"},
+        {name:"Bench Press — Back-off", muscle:"Chest",     sets:3, reps:4,  note:"3×4 @90% of heavy 4", type:"fixed"},
+        {name:"Push Press",             muscle:"Shoulders", sets:5, reps:3,  note:"5×3 @82–85% (~66–68kg)", pct:83, type:"fixed"},
+        {name:"DB Strict Press",        muscle:"Shoulders", sets:3, reps:10, note:"Accessory", type:"fixed"},
+        {name:"AMRAP 15 — Ski/HSPU/C2B", muscle:"Conditioning", sets:1, reps:null, note:"AMRAP15: 20cal ski + 10 HSPU + 15 C2B", type:"amrap"},
+      ],
+    },
+    {
+      id:"D3", name:"Day 3 — C&J + Deadlift", focus:["Olympic","Back"],
+      exercises:[
+        {name:"Clean & Jerk",       muscle:"Olympic",          sets:4,  reps:1,  note:"4×1 @85–88% (~97–101kg) — heavy singles", pct:86, type:"ramp"},
+        {name:"Deadlift",           muscle:"Posterior Chain",  sets:4,  reps:3,  note:"4×3 @85% (~153kg) — controlled descent", pct:85, type:"fixed"},
+        {name:"Copenhagen Plank",   muscle:"Core",             sets:3,  reps:30, note:"3×30s/side — adductor + core", type:"fixed"},
+        {name:"3 Rounds — DBS/Bike/RC", muscle:"Conditioning", sets:3, reps:null, note:"15 DBS @22.5kg + 20cal bike + 2 rope climbs", type:"fortime"},
+      ],
+    },
+    {
+      id:"D4", name:"Day 4 — Press + Pull", focus:["Shoulders","Back"],
+      exercises:[
+        {name:"Strict Press — Heavy 4",  muscle:"Shoulders", sets:1, reps:4,  note:"Heavy 4 (~68–70kg)", type:"ramp"},
+        {name:"Strict Press — Back-off", muscle:"Shoulders", sets:3, reps:4,  note:"3×4 @90% of heavy 4", type:"fixed"},
+        {name:"Weighted Pull-ups",        muscle:"Back",     sets:5, reps:4,  note:"5×4 @14–16kg added", type:"fixed"},
+        {name:"Toes-to-Bar",             muscle:"Core",      sets:4, reps:15, note:"Strict — add weight if easy", type:"fixed"},
+        {name:"AMRAP 12 — C&J/TTB/Row",  muscle:"Conditioning", sets:1, reps:null, note:"AMRAP12: 5 C&J @55kg + 10 TTB + 15cal row", type:"amrap"},
+      ],
+    },
+  ],
+  3: [
+    {
+      id:"D1", name:"Day 1 — Snatch + Squat", focus:["Olympic","Legs"],
+      exercises:[
+        {name:"Hang Power Snatch",      muscle:"Olympic",    sets:6, reps:1,  note:"6×1 @85–90% (~47–50kg) — near-max singles", pct:88, type:"ramp"},
+        {name:"Front Squat",            muscle:"Quads",      sets:3, reps:2,  note:"3×2 @92–95% (~124–128kg)", pct:93, type:"fixed"},
+        {name:"Banded Hamstring Curl",  muscle:"Hamstrings", sets:3, reps:15, note:"Accessory — lower back management", type:"fixed"},
+        {name:"For Time — Thruster/C2B/Ski", muscle:"Conditioning", sets:1, reps:null, note:"21-15-9: thruster @43kg + C2B pull-ups + 15-12-9 cal ski", type:"fortime"},
+      ],
+    },
+    {
+      id:"D2", name:"Day 2 — Bench + Press", focus:["Chest","Shoulders"],
+      exercises:[
+        {name:"Bench Press — Heavy 2",  muscle:"Chest",     sets:1, reps:2,  note:"Heavy 2 (~110–112kg) — close to PR", type:"ramp"},
+        {name:"Bench Press — Back-off", muscle:"Chest",     sets:3, reps:2,  note:"3×2 @90% of heavy 2", type:"fixed"},
+        {name:"Push Press",             muscle:"Shoulders", sets:4, reps:2,  note:"4×2 @88% (~70kg)", pct:88, type:"fixed"},
+        {name:"AMRAP 10 — Row/HSPU/C2B", muscle:"Conditioning", sets:1, reps:null, note:"AMRAP10: 12cal row + 8 HSPU + 10 C2B", type:"amrap"},
+      ],
+    },
+    {
+      id:"D3", name:"Day 3 — C&J + Deadlift", focus:["Olympic","Back"],
+      exercises:[
+        {name:"Clean & Jerk — Heavy Single", muscle:"Olympic",         sets:1,  reps:1, note:"Ramp to daily max — aim 95–100kg", pct:95, type:"ramp"},
+        {name:"Banded Deadlift EMOM",        muscle:"Posterior Chain", sets:10, reps:3, note:"EMOM10: 3 reps @60% (~108kg) + bands — speed", pct:60, type:"emom"},
+        {name:"GHD Hip Extension",           muscle:"Hamstrings",      sets:3,  reps:10, note:"Weighted — 5–10kg plate", type:"fixed"},
+        {name:"Diane — DL/HSPU",             muscle:"Conditioning",    sets:1,  reps:null, note:"21-15-9: DL @102kg + HSPU", type:"fortime"},
+      ],
+    },
+    {
+      id:"D4", name:"Day 4 — Press + Pull", focus:["Shoulders","Back"],
+      exercises:[
+        {name:"Strict Press — Heavy 2",  muscle:"Shoulders", sets:1, reps:2, note:"Heavy 2 (~72–75kg) — near PR", type:"ramp"},
+        {name:"Strict Press — Back-off", muscle:"Shoulders", sets:3, reps:2, note:"3×2 @90% of heavy 2", type:"fixed"},
+        {name:"Weighted Pull-ups",        muscle:"Back",     sets:5, reps:3, note:"5×3 @18–20kg added — heavy", type:"fixed"},
+        {name:"Ring Dips",            muscle:"Chest",     sets:4, reps:8, note:"4×8 — full ROM, chest dip. Scale with band if needed.", type:"fixed"},
+        {name:"For Time — WPU/Row/TTB",  muscle:"Conditioning", sets:1, reps:null, note:"3 rds: 10 WPU @bw + 25cal row + 15 TTB", type:"fortime"},
+      ],
+    },
+  ],
+  4: [
+    {
+      id:"D1", name:"Day 1 — Snatch + Squat", focus:["Olympic","Legs"],
+      exercises:[
+        {name:"Snatch — Build to Max", muscle:"Olympic", sets:1, reps:1, note:"W49-50: build. W51: test PR. W52: 60% technique only", pct:95, type:"ramp"},
+        {name:"Front Squat",           muscle:"Quads",   sets:3, reps:1, note:"W49-50: 3×1 @95%. W51: test PR. W52: deload 50%", pct:95, type:"ramp"},
+        {name:"Single-Leg RDL",        muscle:"Hamstrings", sets:2, reps:8, note:"Maintenance — moderate load", type:"fixed"},
+        {name:"Short CF Workout",      muscle:"Conditioning", sets:1, reps:null, note:"10min AMRAP — moderate pace, no redline", type:"amrap"},
+      ],
+    },
+    {
+      id:"D2", name:"Day 2 — Bench + Press", focus:["Chest","Shoulders"],
+      exercises:[
+        {name:"Bench Press — Test",   muscle:"Chest",     sets:1, reps:1, note:"W51: attempt PR (113–115kg). W49-50: heavy 3. W52: deload", pct:100, type:"ramp"},
+        {name:"Push Press — Test",    muscle:"Shoulders", sets:1, reps:1, note:"W51: attempt 82–85kg PR. W49-50: 3×3 @90%", pct:100, type:"ramp"},
+        {name:"DB Strict Press",      muscle:"Shoulders", sets:2, reps:10, note:"Maintenance", type:"fixed"},
+        {name:"Open-style WOD",       muscle:"Conditioning", sets:1, reps:null, note:"Competition-style CF workout — full effort W51", type:"amrap"},
+      ],
+    },
+    {
+      id:"D3", name:"Day 3 — C&J + Deadlift", focus:["Olympic","Back"],
+      exercises:[
+        {name:"Clean & Jerk — Test", muscle:"Olympic",         sets:1, reps:1, note:"W51: attempt 100–102kg PR. W49-50: build to 95%", pct:100, type:"ramp"},
+        {name:"Deadlift — Test",     muscle:"Posterior Chain", sets:1, reps:1, note:"W51: attempt 185kg PR. ⚠️ Use belt. W52: deload", pct:100, type:"ramp"},
+        {name:"GHD Hip Extension",   muscle:"Hamstrings",      sets:2, reps:10, note:"Maintenance", type:"fixed"},
+        {name:"Short Chipper",       muscle:"Conditioning",    sets:1, reps:null, note:"30 WB + 20 TTB + 400m run + 10 rope climbs", type:"fortime"},
+      ],
+    },
+    {
+      id:"D4", name:"Day 4 — Press + Pull", focus:["Shoulders","Back"],
+      exercises:[
+        {name:"Strict Press — Test",  muscle:"Shoulders", sets:1, reps:1, note:"W51: attempt 76–78kg PR. W49-50: build. W52: deload", pct:100, type:"ramp"},
+        {name:"Back Squat — Test",    muscle:"Quads",     sets:1, reps:1, note:"W51: attempt 158kg PR. W49-50: 3×1 @93%. W52: deload", pct:100, type:"ramp"},
+        {name:"Weighted Pull-ups",    muscle:"Back",      sets:3, reps:3, note:"W51: test max added weight", type:"ramp"},
+        {name:"Open-style WOD",       muscle:"Conditioning", sets:1, reps:null, note:"Full CF benchmark — record all results", type:"amrap"},
+      ],
+    },
+  ],
+};
+
+// ── ACCESSORY BLOCKS ─────────────────────────────────────────────────────────
+// Keyed by day ID. Each meso has slightly progressed load/reps.
+
+const ACCESSORIES = {
+  D1: [
+    { name: "Hip Thrust",             muscle: "Glutes",        sets: 3, reps: 12, note: "3×12 — DB or barbell, full glute squeeze at top. Primary glute builder, offloads lower back." },
+    { name: "Tibialis Raise",         muscle: "Tibialis",      sets: 3, reps: 20, note: "3×20 — wall lean or seated. Dorsiflexion. Knee health under squat volume." },
+    { name: "Band External Rotation", muscle: "Rotator Cuff",  sets: 3, reps: 15, note: "3×15/side — elbow at 90°, slow and controlled. Shoulder health for snatch/OHS." },
+  ],
+  D2: [
+    { name: "Lateral Raise",  muscle: "Shoulders",  sets: 4, reps: 15, note: "4×15 — light DB, slight forward lean, no momentum. Builds shoulder width." },
+    { name: "Face Pull",      muscle: "Rear Delts", sets: 3, reps: 20, note: "3×20 — cable at eye level, external rotate at end. Posture + shoulder health." },
+    { name: "Tricep Pushdown",muscle: "Triceps",    sets: 3, reps: 15, note: "3×15 — cable or band, elbows locked at sides. Direct tricep volume." },
+  ],
+  D3: [
+    { name: "Hip Thrust — Heavy",    muscle: "Glutes",    sets: 4, reps: 10, note: "4×10 — barbell, heavier than D1. Primary posterior chain isolation." },
+    { name: "Banded Hamstring Curl", muscle: "Hamstrings", sets: 3, reps: 15, note: "3×15 — prone or seated machine. Direct hamstring isolation missing from program." },
+    { name: "Calf Raise",            muscle: "Calves",    sets: 4, reps: 20, note: "4×20 — slow 3s eccentric. Single-leg if easy. Knee + ankle health under squat load." },
+  ],
+  D4: [
+    { name: "Barbell Curl",    muscle: "Biceps",     sets: 3, reps: 12, note: "3×12 — strict, no swing. Zero direct bicep work anywhere else in program." },
+    { name: "Face Pull",       muscle: "Rear Delts", sets: 3, reps: 20, note: "3×20 — high frequency intentional. Counteracts heavy pressing volume." },
+    { name: "Band Pull-Apart", muscle: "Rear Delts", sets: 3, reps: 25, note: "3×25 — light band, arms straight. Scapular health for overhead and Olympic work." },
+  ],
+};
+
+// ── STATIC DATA ──────────────────────────────────────────────────────────────
+
+const INITIAL_PRS = [
+  {name:"Back Squat",       weight:155,   reps:1, unit:"kg", date:"2025-04-01"},
+  {name:"Deadlift",         weight:180,   reps:1, unit:"kg", date:"2025-05-02"},
+  {name:"Front Squat",      weight:135,   reps:1, unit:"kg", date:"2025-04-28"},
+  {name:"Bench Press",      weight:112.5, reps:1, unit:"kg", date:"2023-10-04"},
+  {name:"Push Press",       weight:80,    reps:1, unit:"kg", date:"2025-07-01"},
+  {name:"Hang Power Clean", weight:80,    reps:1, unit:"kg", date:"2025-07-01"},
+];
+
+const MUSCLE_COLORS = {
+  "Full Body":"#00b4ff","Legs":"#ff6b35","Quads":"#ff6b35",
+  "Hamstrings":"#ff9500","Posterior Chain":"#ff9500",
+  "Chest":"#a855f7","Shoulders":"#ec4899","Back":"#22d3ee",
+  "Core":"#4ade80","Conditioning":"#facc15","Olympic":"#00b4ff",
+};
+
+const DEMO_HISTORY = [
+  {id:"h1",dayId:"D1",week:36,date:"2026-05-05",duration:65,
+   exercises:[
+     {name:"Hang Power Snatch",sets:[{w:56,r:2},{w:58,r:2},{w:60,r:2},{w:60,r:2}]},
+     {name:"Front Squat",sets:[{w:110,r:6},{w:112,r:6},{w:112,r:6}]},
+     {name:"EMOM 12 — Bike/Burpee/DL",sets:[{w:100,r:12}]},
+   ],prs:[]},
+  {id:"h2",dayId:"D2",week:36,date:"2026-05-03",duration:60,
+   exercises:[
+     {name:"Bench Press — Heavy 5",sets:[{w:105,r:5}]},
+     {name:"Bench Press — Back-off",sets:[{w:94,r:5},{w:94,r:5},{w:94,r:5}]},
+     {name:"Push Press",sets:[{w:60,r:3},{w:60,r:3},{w:60,r:3},{w:60,r:3}]},
+   ],prs:[]},
+  {id:"h3",dayId:"D3",week:36,date:"2026-04-29",duration:72,
+   exercises:[
+     {name:"Clean & Jerk — 1RM",sets:[{w:80,r:1},{w:85,r:1},{w:90,r:1},{w:93,r:1}]},
+     {name:"Banded Deadlift EMOM",sets:[{w:108,r:3}]},
+   ],prs:["Clean & Jerk — 1RM"]},
+  {id:"h4",dayId:"D4",week:36,date:"2026-04-26",duration:55,
+   exercises:[
+     {name:"Weighted Pull-ups",sets:[{w:10,r:5},{w:12,r:5},{w:12,r:5}]},
+     {name:"Strict Press",sets:[{w:65,r:2},{w:67,r:2},{w:67,r:2},{w:67,r:2}]},
+     {name:"Toes-to-Bar",sets:[{w:0,r:12},{w:0,r:12},{w:0,r:10}]},
+   ],prs:[]},
+];
+
+const PROGRESS_DATA = {
+  "Bench Press":[85,90,95,100,102.5,105,107.5,110,112.5],
+  "Front Squat":[100,105,107,110,112,115,120,125,135],
+  "Deadlift":[130,140,150,155,160,165,170,175,180],
+  "Back Squat":[120,125,130,135,140,145,148,152,155],
+  "Push Press":[55,60,62,65,67,70,72,75,80],
+  "Hang Power Clean":[60,65,67,70,72,74,76,78,80],
+};
+
+const WEEKLY_VOLUME = [
+  {muscle:"Quads / Legs",sets:18},{muscle:"Posterior Chain",sets:14},
+  {muscle:"Shoulders",sets:20},{muscle:"Chest",sets:12},
+  {muscle:"Back / Pull",sets:22},{muscle:"Core",sets:10},
+  {muscle:"Olympic / Full",sets:16},{muscle:"Conditioning",sets:8},
+];
+
+// ── HELPERS ──────────────────────────────────────────────────────────────────
+
+function getMesoForWeek(w) { return MESOS.find(m => m.weeks.includes(w)) || MESOS[0]; }
+function getWorkoutsForWeek(w) { return PLAN_WORKOUTS[getMesoForWeek(w).id]; }
+function fmt(d) { return new Date(d).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"2-digit"}); }
+
+// Honest duration estimate:
+//   Warmup: 5min
+//   Cooldown: 10min (5 stretches × ~2min each)
+//   Transitions/setup: 5min
+//   Olympic sets: ramp singles = 5min/set (load + 3min rest), technique sets = 4min/set
+//   Strength compound sets: 4min/set (work + 2-3min rest)
+//   Conditioning EMOM: parse number from name = exact minutes
+//   Conditioning AMRAP/For Time: parse number, else 15min; add 3min setup
+//   Accessory isolation: 2min/set (45s work + 75s rest)
+function estimateWorkoutDuration(workout) {
+  let mins = 5 + 10 + 5; // warmup + cooldown + transitions
+
+  (workout.exercises || []).forEach(ex => {
+    const n = ex.name.toLowerCase();
+    const s = ex.sets || 1;
+
+    if (ex.muscle === "Conditioning") {
+      const match = n.match(/\d+/);
+      const wod = match ? parseInt(match[0]) : 15;
+      mins += wod + 3; // workout + setup/rest
+    } else if (ex.muscle === "Olympic") {
+      // singles (ramp) cost more — plate changes, chalk, focus between sets
+      mins += s * (ex.reps === 1 ? 5 : 4);
+    } else {
+      // strength compound: 4min/set
+      mins += s * 4;
+    }
+  });
+
+  // Accessories: 2min/set
+  const acc = ACCESSORIES[workout.id] || [];
+  acc.forEach(ex => { mins += (ex.sets || 3) * 2; });
+
+  return Math.round(mins);
+}
+
+function durationLabel(mins) {
+  const h = Math.floor(mins / 60), m = mins % 60;
+  if (h === 0) return `~${m}min`;
+  return m === 0 ? `~${h}h` : `~${h}h ${m}min`;
+}
+
+function durationColor(mins) {
+  if (mins <= 90) return "#4ade80";
+  if (mins <= 110) return "#facc15";
+  return "#f87171"; // over 110min = pushing toward 2h limit
+}
+
+function useTimer(running) {
+  const [elapsed, setElapsed] = useState(0);
+  const startRef = useRef(null);   // wall-clock time when last resumed
+  const baseRef  = useRef(0);      // accumulated seconds before last pause
+
+  useEffect(() => {
+    if (running) {
+      startRef.current = Date.now();
+      const id = setInterval(() => {
+        setElapsed(baseRef.current + Math.floor((Date.now() - startRef.current) / 1000));
+      }, 500); // poll every 500ms — snappy UI, low cost
+      return () => clearInterval(id);
+    } else {
+      // Paused: snapshot current elapsed into base
+      baseRef.current = elapsed;
+    }
+  }, [running]);
+
+  const reset = () => { baseRef.current = 0; startRef.current = null; setElapsed(0); };
+  const mm = String(Math.floor(elapsed / 60)).padStart(2, "0");
+  const ss = String(elapsed % 60).padStart(2, "0");
+  return { display: `${mm}:${ss}`, elapsed, reset };
+}
+
+function Sparkline({data,color="#00b4ff"}) {
+  if (!data||data.length<2) return null;
+  const W=120,H=36,p=4,min=Math.min(...data),max=Math.max(...data),range=max-min||1;
+  const pts = data.map((v,i)=>`${p+(i/(data.length-1))*(W-p*2)},${H-p-((v-min)/range)*(H-p*2)}`).join(" ");
+  const lx=p+((data.length-1)/(data.length-1))*(W-p*2), ly=H-p-((data[data.length-1]-min)/range)*(H-p*2);
+  return <svg width={W} height={H} style={{overflow:"visible"}}><polyline points={pts} fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round"/><circle cx={lx} cy={ly} r="3" fill={color}/></svg>;
+}
+
+// ── EXERCISE TEMPLATES ────────────────────────────────────────────────────────
+
+function ExCard({ ex, meso, children }) {
+  const col = MUSCLE_COLORS[ex.muscle] || "#00b4ff";
+  const typeColors = { emom:"#facc15", amrap:"#f97316", fortime:"#f43f5e", fixed:"#4ade80", ramp:"#00b4ff" };
+  const typeLabels = { emom:"EMOM", amrap:"AMRAP", fortime:"FOR TIME", fixed:"FIXED", ramp:"RAMP" };
+  return (
+    <div style={{background:"#0f0f1a",border:"1px solid #1e1e30",borderRadius:12,padding:"12px 14px",marginBottom:10}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
+        <div>
+          <div style={{fontFamily:"Barlow Condensed",fontSize:16,fontWeight:800,color:"#fff",lineHeight:1.1}}>{ex.name}</div>
+          <div style={{display:"flex",gap:5,marginTop:4,flexWrap:"wrap"}}>
+            <span style={{fontSize:9,padding:"2px 5px",background:`${col}22`,color:col,borderRadius:4,fontFamily:"Barlow Condensed",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{ex.muscle}</span>
+            <span style={{fontSize:9,padding:"2px 5px",background:`${typeColors[ex.type]||"#333"}22`,color:typeColors[ex.type]||"#888",borderRadius:4,fontFamily:"Barlow Condensed",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{typeLabels[ex.type]||ex.type}</span>
+            {ex.pct&&<span style={{fontSize:9,padding:"2px 5px",background:`${meso.color}22`,color:meso.color,borderRadius:4,fontFamily:"Barlow Condensed",fontWeight:700,letterSpacing:1}}>{ex.pct}% 1RM</span>}
+          </div>
+        </div>
+      </div>
+      {ex.note&&<div style={{fontSize:11,color:"#888",background:"#13131f",borderRadius:6,padding:"6px 10px",marginBottom:10,lineHeight:1.5}}>📋 {ex.note}</div>}
+      {children}
+    </div>
+  );
+}
+
+// EMOM: checklist per interval + pace note
+function EmomTemplate({ ex, log, setLog, meso }) {
+  const intervals = ex.sets || 10;
+  const checked = log.intervals || [];
+  const note = log.note || "";
+  const toggle = (i) => {
+    const next = checked.includes(i) ? checked.filter(x=>x!==i) : [...checked,i];
+    setLog({ ...log, intervals: next });
+  };
+  return (
+    <ExCard ex={ex} meso={meso}>
+      <div style={{fontFamily:"Barlow Condensed",fontSize:11,color:"#888",letterSpacing:1,marginBottom:8}}>TAP EACH INTERVAL AS COMPLETED</div>
+      <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}}>
+        {Array.from({length:intervals},(_,i)=>{
+          const done = checked.includes(i);
+          return (
+            <button key={i} onClick={()=>toggle(i)} style={{
+              width:36,height:36,borderRadius:8,border:`1px solid ${done?meso.color+"88":"#2a2a3e"}`,
+              background:done?`${meso.color}22`:"#13131f",color:done?meso.color:"#555",
+              fontFamily:"Barlow Condensed",fontWeight:700,fontSize:12,cursor:"pointer"
+            }}>{i+1}</button>
+          );
+        })}
+      </div>
+      <div style={{display:"flex",alignItems:"center",gap:8}}>
+        <div style={{fontSize:10,color:"#555",fontFamily:"Barlow Condensed",whiteSpace:"nowrap"}}>{checked.length}/{intervals} done</div>
+        <input value={note} onChange={e=>setLog({...log,note:e.target.value})} placeholder="Pace notes — e.g. held pace, dropped at min 9..." style={{flex:1,background:"#13131f",border:"1px solid #2a2a3e",borderRadius:6,color:"#ccc",fontSize:11,fontFamily:"Barlow",padding:"6px 8px",outline:"none",boxSizing:"border-box"}}/>
+      </div>
+    </ExCard>
+  );
+}
+
+// AMRAP: score (rounds + reps) + notes
+function AmrapTemplate({ ex, log, setLog, meso }) {
+  const done = !!(log.rounds!==undefined&&log.rounds!=="");
+  return (
+    <ExCard ex={ex} meso={meso}>
+      <div style={{fontFamily:"Barlow Condensed",fontSize:11,color:"#888",letterSpacing:1,marginBottom:8}}>RECORD YOUR SCORE</div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
+        <div>
+          <div style={{fontSize:9,color:"#555",fontFamily:"Barlow Condensed",letterSpacing:1,textTransform:"uppercase",marginBottom:4}}>Rounds</div>
+          <input type="number" value={log.rounds||""} onChange={e=>setLog({...log,rounds:e.target.value})} placeholder="0" style={{width:"100%",background:done?"#0d2a1a":"#13131f",border:`1px solid ${done?meso.color+"55":"#2a2a3e"}`,borderRadius:8,color:"#fff",fontSize:24,fontFamily:"Barlow Condensed",fontWeight:900,padding:"10px",textAlign:"center",outline:"none",boxSizing:"border-box"}}/>
+        </div>
+        <div>
+          <div style={{fontSize:9,color:"#555",fontFamily:"Barlow Condensed",letterSpacing:1,textTransform:"uppercase",marginBottom:4}}>+ Reps</div>
+          <input type="number" value={log.reps||""} onChange={e=>setLog({...log,reps:e.target.value})} placeholder="0" style={{width:"100%",background:done?"#0d2a1a":"#13131f",border:`1px solid ${done?meso.color+"55":"#2a2a3e"}`,borderRadius:8,color:"#fff",fontSize:24,fontFamily:"Barlow Condensed",fontWeight:900,padding:"10px",textAlign:"center",outline:"none",boxSizing:"border-box"}}/>
+        </div>
+      </div>
+      <input value={log.note||""} onChange={e=>setLog({...log,note:e.target.value})} placeholder="Notes — e.g. broke up TTB sets, felt strong on ski..." style={{width:"100%",background:"#13131f",border:"1px solid #2a2a3e",borderRadius:6,color:"#ccc",fontSize:11,fontFamily:"Barlow",padding:"6px 8px",outline:"none",boxSizing:"border-box"}}/>
+    </ExCard>
+  );
+}
+
+// FOR TIME: finish time + notes
+function ForTimeTemplate({ ex, log, setLog, meso }) {
+  const done = !!(log.mm||log.ss);
+  return (
+    <ExCard ex={ex} meso={meso}>
+      <div style={{fontFamily:"Barlow Condensed",fontSize:11,color:"#888",letterSpacing:1,marginBottom:8}}>FINISH TIME</div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",gap:8,alignItems:"center",marginBottom:10}}>
+        <div>
+          <div style={{fontSize:9,color:"#555",fontFamily:"Barlow Condensed",letterSpacing:1,textTransform:"uppercase",marginBottom:4}}>Min</div>
+          <input type="number" value={log.mm||""} onChange={e=>setLog({...log,mm:e.target.value})} placeholder="00" style={{width:"100%",background:done?"#2a0d14":"#13131f",border:`1px solid ${done?"#f43f5e55":"#2a2a3e"}`,borderRadius:8,color:"#fff",fontSize:28,fontFamily:"Barlow Condensed",fontWeight:900,padding:"10px",textAlign:"center",outline:"none",boxSizing:"border-box"}}/>
+        </div>
+        <div style={{fontFamily:"Barlow Condensed",fontSize:24,fontWeight:900,color:"#444",paddingTop:20}}>:</div>
+        <div>
+          <div style={{fontSize:9,color:"#555",fontFamily:"Barlow Condensed",letterSpacing:1,textTransform:"uppercase",marginBottom:4}}>Sec</div>
+          <input type="number" value={log.ss||""} onChange={e=>setLog({...log,ss:e.target.value})} placeholder="00" style={{width:"100%",background:done?"#2a0d14":"#13131f",border:`1px solid ${done?"#f43f5e55":"#2a2a3e"}`,borderRadius:8,color:"#fff",fontSize:28,fontFamily:"Barlow Condensed",fontWeight:900,padding:"10px",textAlign:"center",outline:"none",boxSizing:"border-box"}}/>
+        </div>
+      </div>
+      <input value={log.note||""} onChange={e=>setLog({...log,note:e.target.value})} placeholder="Notes — splits, how it felt, strategy..." style={{width:"100%",background:"#13131f",border:"1px solid #2a2a3e",borderRadius:6,color:"#ccc",fontSize:11,fontFamily:"Barlow",padding:"6px 8px",outline:"none",boxSizing:"border-box"}}/>
+    </ExCard>
+  );
+}
+
+// FIXED: prescription prominent, one checkbox per set, single weight override
+function FixedTemplate({ ex, log, setLog, meso }) {
+  const weight = log.weight !== undefined ? log.weight : (ex.suggestedWeight || "");
+  const checked = log.checked || [];
+  const toggle = (i) => {
+    const next = checked.includes(i) ? checked.filter(x=>x!==i) : [...checked,i];
+    setLog({ ...log, checked: next });
+  };
+  const allDone = checked.length === ex.sets;
+  return (
+    <ExCard ex={ex} meso={meso}>
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:10}}>
+        <div style={{background:"#13131f",border:"1px solid #2a2a3e",borderRadius:8,padding:"8px 12px",display:"flex",alignItems:"center",gap:6}}>
+          <div style={{fontSize:9,color:"#555",fontFamily:"Barlow Condensed",letterSpacing:1,textTransform:"uppercase"}}>Weight</div>
+          <input type="number" value={weight} onChange={e=>setLog({...log,weight:e.target.value})} placeholder="kg" style={{background:"transparent",border:"none",color:"#fff",fontSize:20,fontFamily:"Barlow Condensed",fontWeight:900,width:60,textAlign:"center",outline:"none"}}/>
+          <div style={{fontSize:10,color:"#555"}}>kg</div>
+        </div>
+        <div style={{fontFamily:"Barlow Condensed",fontSize:22,fontWeight:900,color:allDone?"#4ade80":"#555"}}>
+          {checked.length} <span style={{fontSize:14,color:"#444"}}>/ {ex.sets} sets × {ex.reps} reps</span>
+        </div>
+      </div>
+      <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+        {Array.from({length:ex.sets},(_,i)=>{
+          const done = checked.includes(i);
+          return (
+            <button key={i} onClick={()=>toggle(i)} style={{
+              flex:"1 0 44px",height:44,borderRadius:8,
+              border:`1px solid ${done?"#4ade8088":"#2a2a3e"}`,
+              background:done?"#0d2a1a":"#13131f",
+              color:done?"#4ade80":"#555",
+              fontFamily:"Barlow Condensed",fontWeight:800,fontSize:13,cursor:"pointer",
+              display:"flex",alignItems:"center",justifyContent:"center",gap:4
+            }}>
+              {done ? "✓" : i+1}
+            </button>
+          );
+        })}
+      </div>
+    </ExCard>
+  );
+}
+
+// RAMP: per-set rows with weight + reps (build to max)
+function RampTemplate({ ex, log, setLog, meso }) {
+  const rows = log.rows || Array.from({length: Math.max(ex.sets||3, 3)}, ()=>({w:"",r:"",done:false}));
+  const update = (i, field, val) => {
+    const next = rows.map((r,ri) => ri===i ? {...r,[field]:val} : r);
+    setLog({...log, rows: next});
+  };
+  const toggleDone = (i) => {
+    const next = rows.map((r,ri) => ri===i ? {...r,done:!r.done} : r);
+    setLog({...log, rows: next});
+  };
+  const addRow = () => setLog({...log, rows:[...rows,{w:"",r:"",done:false}]});
+  return (
+    <ExCard ex={ex} meso={meso}>
+      <div style={{display:"grid",gridTemplateColumns:"24px 80px 80px 26px",gap:6,marginBottom:6}}>
+        {["Set","kg","Reps",""].map(h=><div key={h} style={{fontSize:9,color:"#444",fontFamily:"Barlow Condensed",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{h}</div>)}
+      </div>
+      {rows.map((r,i)=>(
+        <div key={i} style={{display:"grid",gridTemplateColumns:"24px 80px 80px 26px",gap:6,marginBottom:6,opacity:r.done?0.6:1}}>
+          <div style={{fontFamily:"Barlow Condensed",fontWeight:700,fontSize:12,color:r.done?meso.color:"#555",display:"flex",alignItems:"center"}}>{i+1}</div>
+          <input value={r.w} onChange={e=>update(i,"w",e.target.value)} placeholder="kg" style={{background:r.done?"#0a0f1a":"#13131f",border:`1px solid ${r.done?meso.color+"55":"#2a2a3e"}`,borderRadius:6,color:"#fff",fontSize:14,fontFamily:"Barlow Condensed",fontWeight:700,padding:"6px",textAlign:"center",outline:"none",boxSizing:"border-box"}}/>
+          <input value={r.r} onChange={e=>update(i,"r",e.target.value)} placeholder="reps" style={{background:r.done?"#0a0f1a":"#13131f",border:`1px solid ${r.done?meso.color+"55":"#2a2a3e"}`,borderRadius:6,color:"#fff",fontSize:14,fontFamily:"Barlow Condensed",fontWeight:700,padding:"6px",textAlign:"center",outline:"none",boxSizing:"border-box"}}/>
+          <button onClick={()=>toggleDone(i)} style={{background:r.done?meso.color:"#1a1a2e",border:"none",borderRadius:6,width:26,height:26,cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center",color:r.done?"#000":"#555"}}>{r.done?"✓":"○"}</button>
+        </div>
+      ))}
+      <button onClick={addRow} style={{marginTop:2,background:"transparent",border:"1px dashed #2a2a3e",borderRadius:6,color:"#444",fontSize:10,fontFamily:"Barlow Condensed",fontWeight:700,letterSpacing:1,padding:"4px 12px",cursor:"pointer",width:"100%"}}>+ ADD SET</button>
+    </ExCard>
+  );
+}
+
+function ExerciseLogger({ ex, log, setLog, meso }) {
+  const type = ex.type || (ex.muscle === "Conditioning" ? "amrap" : "fixed");
+  if (type === "emom")    return <EmomTemplate   ex={ex} log={log} setLog={setLog} meso={meso}/>;
+  if (type === "amrap")   return <AmrapTemplate  ex={ex} log={log} setLog={setLog} meso={meso}/>;
+  if (type === "fortime") return <ForTimeTemplate ex={ex} log={log} setLog={setLog} meso={meso}/>;
+  if (type === "fixed")   return <FixedTemplate  ex={ex} log={log} setLog={setLog} meso={meso}/>;
+  return                         <RampTemplate   ex={ex} log={log} setLog={setLog} meso={meso}/>;
+}
+
+// ── ACCESSORY TEMPLATE (isolation: fixed sets, single weight override) ────────
+
+function AccessoryLogger({ ex, log, setLog }) {
+  const col = MUSCLE_COLORS[ex.muscle] || "#a855f7";
+  const weight = log.weight !== undefined ? log.weight : "";
+  const checked = log.checked || [];
+  const toggle = (i) => {
+    const next = checked.includes(i) ? checked.filter(x=>x!==i) : [...checked,i];
+    setLog({...log, checked: next});
+  };
+  return (
+    <div style={{borderBottom:"1px solid #1a1a2e",paddingBottom:10,marginBottom:10}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4}}>
+        <div>
+          <div style={{fontFamily:"Barlow Condensed",fontSize:14,fontWeight:800,color:"#ccc"}}>{ex.name}</div>
+          <span style={{fontSize:9,padding:"2px 5px",background:`${col}22`,color:col,borderRadius:4,fontFamily:"Barlow Condensed",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{ex.muscle}</span>
+        </div>
+        <div style={{background:"#13131f",border:"1px solid #2a2a3e",borderRadius:6,display:"flex",alignItems:"center",gap:4,padding:"4px 8px"}}>
+          <input type="number" value={weight} onChange={e=>setLog({...log,weight:e.target.value})} placeholder="kg" style={{background:"transparent",border:"none",color:"#fff",fontSize:14,fontFamily:"Barlow Condensed",fontWeight:700,width:40,textAlign:"center",outline:"none"}}/>
+          <span style={{fontSize:9,color:"#555"}}>kg</span>
+        </div>
+      </div>
+      <div style={{fontSize:10,color:"#666",lineHeight:1.4,marginBottom:7}}>{ex.note}</div>
+      <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+        {Array.from({length:ex.sets},(_,i)=>{
+          const done = checked.includes(i);
+          return (
+            <button key={i} onClick={()=>toggle(i)} style={{
+              flex:"1 0 40px",height:36,borderRadius:7,
+              border:`1px solid ${done?"#a855f788":"#2a2a3e"}`,
+              background:done?"#1a0a2e":"#13131f",
+              color:done?"#a855f7":"#555",
+              fontFamily:"Barlow Condensed",fontWeight:800,fontSize:12,cursor:"pointer"
+            }}>{done?"✓":i+1}</button>
+          );
+        })}
+        <div style={{flex:"1 0 60px",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"Barlow Condensed",fontSize:10,color:checked.length===ex.sets?"#a855f7":"#444"}}>
+          {checked.length}/{ex.sets} ×{ex.reps||"—"}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PlanScreen({currentWeek}) {
+  const [expanded,setExpanded] = useState(null);
+  return (
+    <div style={{padding:"0 16px 100px"}}>
+      {/* 16-week grid */}
+      <div style={{background:"#0f0f1a",border:"1px solid #1e1e30",borderRadius:12,padding:16,marginBottom:20}}>
+        <div style={{fontFamily:"Barlow Condensed",fontSize:11,fontWeight:700,color:"#888",letterSpacing:2,textTransform:"uppercase",marginBottom:6}}>16-Week Plan · W37 → W52</div>
+        <div style={{fontFamily:"Barlow",fontSize:11,color:"#666",marginBottom:14}}>Priority: Recomposition → Olympic → Strength → Conditioning</div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(16,1fr)",gap:3,marginBottom:12}}>
+          {Array.from({length:16},(_,i)=>{
+            const w=37+i, meso=getMesoForWeek(w), isCur=w===currentWeek, isPast=w<currentWeek;
+            return (
+              <div key={w} style={{height:26,borderRadius:4,display:"flex",alignItems:"center",justifyContent:"center",
+                background:isCur?meso.color:isPast?`${meso.color}33`:`${meso.color}18`,
+                border:isCur?`2px solid ${meso.color}`:"1px solid transparent"}}>
+                <span style={{fontFamily:"Barlow Condensed",fontSize:8,fontWeight:800,color:isCur?"#000":meso.color,lineHeight:1}}>
+                  {w===51?"🏆":`W${w}`}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+        <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
+          {MESOS.map(m=>(
+            <div key={m.id} style={{display:"flex",alignItems:"center",gap:5}}>
+              <div style={{width:8,height:8,borderRadius:2,background:m.color}}/>
+              <span style={{fontFamily:"Barlow Condensed",fontSize:9,color:"#888",textTransform:"uppercase",letterSpacing:1}}>M{m.id} {m.name}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Meso accordions */}
+      {MESOS.map(meso=>{
+        const isActive=meso.weeks.includes(currentWeek), isPast=meso.weeks[meso.weeks.length-1]<currentWeek, isOpen=expanded===meso.id;
+        return (
+          <div key={meso.id} style={{marginBottom:10}}>
+            <button onClick={()=>setExpanded(isOpen?null:meso.id)} style={{
+              width:"100%",background:"#0f0f1a",border:`1px solid ${isActive?meso.color:"#1e1e30"}`,
+              borderRadius:isOpen?"12px 12px 0 0":12,padding:"13px 16px",cursor:"pointer",textAlign:"left",
+              boxShadow:isActive?`0 0 16px ${meso.color}22`:"none"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <div style={{display:"flex",alignItems:"center",gap:10}}>
+                  <div style={{width:4,height:36,background:meso.color,borderRadius:2}}/>
+                  <div>
+                    <div style={{display:"flex",alignItems:"center",gap:7}}>
+                      <div style={{fontFamily:"Barlow Condensed",fontSize:17,fontWeight:900,color:"#fff"}}>Meso {meso.id} — {meso.name}</div>
+                      {isActive&&<span style={{fontSize:9,padding:"2px 6px",background:`${meso.color}22`,color:meso.color,borderRadius:4,fontFamily:"Barlow Condensed",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>ACTIVE</span>}
+                      {isPast&&<span style={{fontSize:9,padding:"2px 6px",background:"#ffffff11",color:"#555",borderRadius:4,fontFamily:"Barlow Condensed",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>DONE</span>}
+                    </div>
+                    <div style={{fontFamily:"Barlow Condensed",fontSize:11,color:"#666"}}>W{meso.weeks[0]}–W{meso.weeks[meso.weeks.length-1]} · {meso.desc}</div>
+                  </div>
+                </div>
+                <span style={{color:meso.color,fontSize:16}}>{isOpen?"▲":"▼"}</span>
+              </div>
+            </button>
+            {isOpen&&(
+              <div style={{background:"#0a0a14",border:`1px solid ${meso.color}33`,borderTop:"none",borderRadius:"0 0 12px 12px",padding:"12px 16px"}}>
+                {PLAN_WORKOUTS[meso.id].map(day=>(
+                  <div key={day.id} style={{marginBottom:14}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+                      <span style={{fontFamily:"Barlow Condensed",fontSize:10,fontWeight:800,color:meso.color,background:`${meso.color}18`,borderRadius:4,padding:"2px 7px",letterSpacing:1}}>{day.id}</span>
+                      <span style={{fontFamily:"Barlow Condensed",fontSize:15,fontWeight:800,color:"#fff"}}>{day.name.split("—")[1]?.trim()}</span>
+                    </div>
+                    {day.exercises.map(ex=>(
+                      <div key={ex.name} style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",padding:"6px 0",borderBottom:"1px solid #1a1a2e"}}>
+                        <div>
+                          <div style={{fontFamily:"Barlow Condensed",fontSize:13,fontWeight:700,color:"#ccc"}}>{ex.name}</div>
+                          <div style={{fontSize:10,color:"#555",lineHeight:1.3}}>{ex.note}</div>
+                        </div>
+                        <span style={{fontSize:9,padding:"2px 6px",background:`${MUSCLE_COLORS[ex.muscle]||"#333"}18`,color:MUSCLE_COLORS[ex.muscle]||"#888",borderRadius:4,fontFamily:"Barlow Condensed",fontWeight:700,letterSpacing:1,textTransform:"uppercase",whiteSpace:"nowrap",marginLeft:8,flexShrink:0}}>{ex.muscle}</span>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
+
+      {/* PR targets */}
+      <div style={{background:"#0f0f1a",border:"1px solid #1e1e30",borderRadius:12,padding:16,marginTop:4}}>
+        <div style={{fontFamily:"Barlow Condensed",fontSize:12,fontWeight:700,color:"#888",letterSpacing:2,textTransform:"uppercase",marginBottom:12}}>🏆 W51 PR Targets</div>
+        {[
+          {lift:"Clean & Jerk",current:"~93kg",target:"100–102kg"},
+          {lift:"Snatch",      current:"50kg",  target:"55–57kg"},
+          {lift:"Front Squat", current:"135kg", target:"138–140kg"},
+          {lift:"Deadlift",    current:"180kg", target:"185kg"},
+          {lift:"Bench Press", current:"112.5kg",target:"113–115kg"},
+          {lift:"Strict Press",current:"75kg",  target:"77–78kg"},
+        ].map(t=>(
+          <div key={t.lift} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 0",borderBottom:"1px solid #1a1a2e"}}>
+            <div style={{fontFamily:"Barlow Condensed",fontSize:14,fontWeight:700,color:"#ccc"}}>{t.lift}</div>
+            <div style={{display:"flex",gap:8,alignItems:"center"}}>
+              <span style={{fontFamily:"Barlow Condensed",fontSize:12,color:"#555"}}>{t.current}</span>
+              <span style={{fontSize:10,color:"#444"}}>→</span>
+              <span style={{fontFamily:"Barlow Condensed",fontSize:14,fontWeight:800,color:"#4ade80"}}>{t.target}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
+
+function Dashboard({history,onStartWorkout,currentWeek}) {
+  const meso=getMesoForWeek(currentWeek), workouts=getWorkoutsForWeek(currentWeek);
+  const streak=4, thisWeek=history.filter(h=>(new Date()-new Date(h.date))/86400000<7).length;
+  return (
+    <div style={{padding:"0 16px 100px"}}>
+      <div style={{background:`linear-gradient(135deg,${meso.color}18,${meso.color}06)`,border:`1px solid ${meso.color}33`,borderRadius:12,padding:"14px 18px",marginBottom:20}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+          <div>
+            <div style={{fontSize:11,color:meso.color,fontFamily:"Barlow Condensed",fontWeight:700,letterSpacing:2,textTransform:"uppercase"}}>Meso {meso.id} — {meso.name} · W{currentWeek}</div>
+            <div style={{fontSize:11,color:"#666",marginTop:2}}>{meso.desc}</div>
+          </div>
+          <span style={{fontSize:9,padding:"3px 8px",background:`${meso.color}22`,color:meso.color,borderRadius:20,fontFamily:"Barlow Condensed",fontWeight:700,letterSpacing:1,textTransform:"uppercase",whiteSpace:"nowrap"}}>W{meso.weeks[0]}–{meso.weeks[meso.weeks.length-1]}</span>
+        </div>
+        <div style={{display:"flex",gap:24,alignItems:"center"}}>
+          <div><div style={{fontFamily:"Barlow Condensed",fontSize:28,fontWeight:900,color:"#fff",lineHeight:1}}>93 <span style={{fontSize:14,color:"#888"}}>kg</span></div><div style={{fontSize:10,color:"#888",textTransform:"uppercase",letterSpacing:1}}>Current</div></div>
+          <div style={{flex:1,height:6,background:"#1a1a2e",borderRadius:3,overflow:"hidden"}}><div style={{width:"70%",height:"100%",background:`linear-gradient(90deg,${meso.color},#4ade80)`,borderRadius:3}}/></div>
+          <div><div style={{fontFamily:"Barlow Condensed",fontSize:28,fontWeight:900,color:"#4ade80",lineHeight:1}}>90 <span style={{fontSize:14,color:"#888"}}>kg</span></div><div style={{fontSize:10,color:"#888",textTransform:"uppercase",letterSpacing:1}}>Goal</div></div>
+        </div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:20}}>
+        {[{label:"Streak",value:streak,icon:"🔥"},{label:"This Week",value:thisWeek,icon:"📅"},{label:"Total",value:history.length+3,icon:"💪"}].map(s=>(
+          <div key={s.label} style={{background:"#0f0f1a",border:"1px solid #1e1e30",borderRadius:12,padding:"12px",textAlign:"center"}}>
+            <div style={{fontSize:18}}>{s.icon}</div>
+            <div style={{fontFamily:"Barlow Condensed",fontSize:30,fontWeight:900,color:"#00b4ff",lineHeight:1,marginTop:4}}>{s.value}</div>
+            <div style={{fontSize:9,color:"#888",textTransform:"uppercase",letterSpacing:1}}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{marginBottom:20}}>
+        <div style={{fontFamily:"Barlow Condensed",fontSize:12,fontWeight:700,color:"#888",letterSpacing:2,textTransform:"uppercase",marginBottom:12}}>W{currentWeek} Workouts</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+          {workouts.map(w=>(
+            <button key={w.id} onClick={()=>onStartWorkout(w)} style={{background:"#0f0f1a",border:"1px solid #1e1e30",borderRadius:12,padding:14,textAlign:"left",cursor:"pointer"}}
+              onMouseOver={e=>e.currentTarget.style.borderColor=meso.color}
+              onMouseOut={e=>e.currentTarget.style.borderColor="#1e1e30"}>
+              <div style={{fontFamily:"Barlow Condensed",fontSize:11,fontWeight:700,color:meso.color,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>{w.id}</div>
+              <div style={{fontFamily:"Barlow Condensed",fontSize:14,fontWeight:700,color:"#fff",lineHeight:1.2}}>{w.name.split("—")[1]?.trim()}</div>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:8}}>
+                <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+                  {w.focus.map(f=><span key={f} style={{fontSize:9,padding:"2px 6px",background:`${MUSCLE_COLORS[f]||"#333"}22`,border:`1px solid ${MUSCLE_COLORS[f]||"#333"}44`,color:MUSCLE_COLORS[f]||"#888",borderRadius:4,fontFamily:"Barlow Condensed",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{f}</span>)}
+                </div>
+                <span style={{fontFamily:"Barlow Condensed",fontSize:11,fontWeight:700,color:durationColor(estimateWorkoutDuration(w)),whiteSpace:"nowrap",marginLeft:6}}>⏱ {durationLabel(estimateWorkoutDuration(w))}</span>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+      <div>
+        <div style={{fontFamily:"Barlow Condensed",fontSize:12,fontWeight:700,color:"#888",letterSpacing:2,textTransform:"uppercase",marginBottom:12}}>Top Records</div>
+        {INITIAL_PRS.slice(0,3).map(pr=>(
+          <div key={pr.name} style={{background:"#0f0f1a",border:"1px solid #1e1e30",borderRadius:12,padding:"12px 16px",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            <div><div style={{fontFamily:"Barlow Condensed",fontSize:16,fontWeight:700,color:"#fff"}}>{pr.name}</div><div style={{fontSize:11,color:"#888"}}>{fmt(pr.date)}</div></div>
+            <div style={{textAlign:"right"}}><div style={{fontFamily:"Barlow Condensed",fontSize:28,fontWeight:900,color:"#00b4ff",lineHeight:1}}>{pr.weight}</div><div style={{fontSize:10,color:"#888",textTransform:"uppercase",letterSpacing:1}}>{pr.unit} × {pr.reps}</div></div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── WORKOUT SCREEN ────────────────────────────────────────────────────────────
+
+function WorkoutScreen({initialWorkout,onSave,currentWeek}) {
+  const today=new Date().toLocaleDateString("en-GB",{weekday:"long",day:"2-digit",month:"long"});
+  const [activeWorkout,setActiveWorkout]=useState(initialWorkout||null);
+  const [started,setStarted]=useState(!!initialWorkout);
+  const [paused,setPaused]=useState(false);
+  const [exercises,setExercises]=useState(initialWorkout?.exercises||[]);
+  const [logs,setLogs]=useState({});
+  const [accLogs,setAccLogs]=useState({});
+  const [showPicker,setShowPicker]=useState(false);
+  const timer=useTimer(started && !paused);
+  const meso=getMesoForWeek(currentWeek);
+  const weekWorkouts=getWorkoutsForWeek(currentWeek);
+
+  useEffect(()=>{
+    if(initialWorkout){setActiveWorkout(initialWorkout);setExercises(initialWorkout.exercises);setStarted(true);setPaused(false);setLogs({});setAccLogs({});}
+  },[initialWorkout]);
+
+  const setLog=(name,val)=>setLogs(l=>({...l,[name]:val}));
+  const setAccLog=(name,val)=>setAccLogs(l=>({...l,[name]:val}));
+
+  const finish=()=>{
+    const exSummary=exercises.map(ex=>{
+      const l=logs[ex.name]||{};
+      let summary="";
+      if(ex.type==="emom") summary=`${(l.intervals||[]).length}/${ex.sets} intervals${l.note?` — ${l.note}`:""}`;
+      else if(ex.type==="amrap") summary=`${l.rounds||0}+${l.reps||0} reps${l.note?` — ${l.note}`:""}`;
+      else if(ex.type==="fortime") summary=`${l.mm||"0"}:${String(l.ss||"0").padStart(2,"0")}${l.note?` — ${l.note}`:""}`;
+      else if(ex.type==="fixed") summary=`${(l.checked||[]).length}/${ex.sets}sets @${l.weight||"?"}kg`;
+      else summary=(l.rows||[]).filter(r=>r.w).map(r=>`${r.w}kg×${r.r}`).join(", ");
+      return {name:ex.name, type:ex.type, summary, rawLog:logs[ex.name]||{}};
+    });
+    const accSummary=(ACCESSORIES[activeWorkout?.id]||[]).map(ex=>({
+      name:ex.name, type:"accessory",
+      summary:`${(accLogs[ex.name]?.checked||[]).length}/${ex.sets}sets @${accLogs[ex.name]?.weight||"?"}kg`,
+      rawLog:accLogs[ex.name]||{}
+    }));
+    onSave({
+      id:`h${Date.now()}`,dayId:activeWorkout?.id,week:currentWeek,
+      date:new Date().toISOString().split("T")[0],
+      duration:Math.floor(timer.elapsed/60),
+      exercises:exSummary,
+      accessories:accSummary,
+      prs:[]
+    });
+    setStarted(false);setPaused(false);setActiveWorkout(null);setExercises([]);setLogs({});setAccLogs({});timer.reset();
+  };
+  const discard=()=>{setStarted(false);setPaused(false);setActiveWorkout(null);setExercises([]);setLogs({});setAccLogs({});timer.reset();};
+
+  if(!activeWorkout) return (
+    <div style={{padding:"0 16px 100px"}}>
+      <div style={{fontFamily:"Barlow Condensed",fontSize:11,color:meso.color,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>W{currentWeek} — {meso.name}</div>
+      <div style={{color:"#666",fontSize:13,marginBottom:20}}>Select a workout to begin.</div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+        {weekWorkouts.map(w=>(
+          <button key={w.id} onClick={()=>{setActiveWorkout(w);setExercises(w.exercises);setStarted(true);}} style={{background:"#0f0f1a",border:"1px solid #1e1e30",borderRadius:12,padding:14,textAlign:"left",cursor:"pointer"}}>
+            <div style={{fontFamily:"Barlow Condensed",fontSize:11,fontWeight:700,color:meso.color,letterSpacing:2,textTransform:"uppercase"}}>{w.id}</div>
+            <div style={{fontFamily:"Barlow Condensed",fontSize:14,fontWeight:700,color:"#fff"}}>{w.name.split("—")[1]?.trim()}</div>
+            <div style={{fontFamily:"Barlow Condensed",fontSize:11,fontWeight:700,color:durationColor(estimateWorkoutDuration(w)),marginTop:6}}>⏱ {durationLabel(estimateWorkoutDuration(w))}</div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
+  const estMins=estimateWorkoutDuration(activeWorkout);
+  const elapsedMins=Math.floor(timer.elapsed/60);
+  const remainMins=Math.max(0,estMins-elapsedMins);
+  const pct=Math.min(100,(elapsedMins/estMins)*100);
+  const overTime=elapsedMins>estMins;
+
+  return (
+    <div style={{padding:"0 16px 120px"}}>
+      {/* Header */}
+      <div style={{marginBottom:10}}>
+        <div style={{fontFamily:"Barlow Condensed",fontSize:10,color:meso.color,letterSpacing:2,textTransform:"uppercase"}}>{today}</div>
+        <div style={{fontFamily:"Barlow Condensed",fontSize:18,fontWeight:900,color:"#fff",lineHeight:1.1,marginBottom:8}}>{activeWorkout.name}</div>
+
+        {/* Timer + controls row */}
+        <div style={{background:"#0f0f1a",border:`1px solid ${paused?"#facc1544":"#1e1e30"}`,borderRadius:12,padding:"10px 14px",display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
+          {/* Big timer */}
+          <div style={{fontFamily:"Barlow Condensed",fontSize:38,fontWeight:900,color:paused?"#facc15":meso.color,lineHeight:1,minWidth:90,transition:"color 0.2s"}}>
+            {timer.display}
+          </div>
+          {paused&&<div style={{fontFamily:"Barlow Condensed",fontSize:10,fontWeight:700,color:"#facc15",letterSpacing:2,textTransform:"uppercase",flex:1}}>PAUSED</div>}
+          {!paused&&<div style={{flex:1}}>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
+              <span style={{fontFamily:"Barlow Condensed",fontSize:10,color:overTime?"#f87171":"#888"}}>{overTime?`+${elapsedMins-estMins}min over`:`${remainMins}min left`}</span>
+              <span style={{fontFamily:"Barlow Condensed",fontSize:10,color:durationColor(estMins)}}>⏱ {durationLabel(estMins)}</span>
+            </div>
+            <div style={{height:3,background:"#1a1a2e",borderRadius:2,overflow:"hidden"}}>
+              <div style={{width:`${pct}%`,height:"100%",background:overTime?"#f87171":meso.color,borderRadius:2}}/>
+            </div>
+          </div>}
+          {/* Pause / Resume button */}
+          <button onClick={()=>setPaused(p=>!p)} style={{
+            background:paused?`linear-gradient(135deg,#facc15,#f59e0b)`:"#1a1a2e",
+            border:`1px solid ${paused?"#facc15":"#2a2a3e"}`,
+            borderRadius:10,width:44,height:44,cursor:"pointer",
+            display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0
+          }}>{paused?"▶":"⏸"}</button>
+        </div>
+
+        {/* Finish / Discard row */}
+        <div style={{display:"grid",gridTemplateColumns:"1fr 2fr",gap:8}}>
+          <button onClick={discard} style={{background:"transparent",border:"1px solid #2a2a3e",borderRadius:10,color:"#555",fontFamily:"Barlow Condensed",fontSize:11,fontWeight:700,letterSpacing:2,padding:"10px",cursor:"pointer"}}>DISCARD</button>
+          <button onClick={finish} style={{background:`linear-gradient(135deg,${meso.color},${meso.color}99)`,border:"none",borderRadius:10,color:"#fff",fontFamily:"Barlow Condensed",fontSize:11,fontWeight:800,letterSpacing:2,padding:"10px",cursor:"pointer"}}>FINISH WORKOUT ✓</button>
+        </div>
+      </div>
+
+      {/* Warmup */}
+      <div style={{background:"#0f0f1a",border:"1px solid #1e1e30",borderRadius:12,padding:"10px 14px",marginBottom:10}}>
+        <div style={{fontFamily:"Barlow Condensed",fontSize:11,fontWeight:700,color:"#facc15",letterSpacing:2,textTransform:"uppercase",marginBottom:5}}>⚡ Warmup — 5 min</div>
+        {["Easy bike or row","Hip circles × 10","Leg swings × 10/side","Shoulder pass-throughs × 10","PVC OHS × 10"].map(w=><div key={w} style={{fontSize:11,color:"#555",padding:"2px 0"}}>• {w}</div>)}
+      </div>
+
+      {/* Type-aware exercise templates */}
+      {exercises.map(ex=>(
+        <ExerciseLogger key={ex.name} ex={ex} log={logs[ex.name]||{}} setLog={v=>setLog(ex.name,v)} meso={meso}/>
+      ))}
+
+      {/* Add exercise */}
+      <button onClick={()=>setShowPicker(p=>!p)} style={{width:"100%",background:"transparent",border:`1px dashed ${meso.color}55`,borderRadius:12,color:meso.color,fontSize:11,fontFamily:"Barlow Condensed",fontWeight:700,letterSpacing:2,padding:10,cursor:"pointer",marginBottom:10}}>+ ADD EXERCISE</button>
+      {showPicker&&(
+        <div style={{background:"#0f0f1a",border:"1px solid #1e1e30",borderRadius:12,padding:12,marginBottom:10}}>
+          {[
+            {name:"Back Squat",type:"ramp",muscle:"Quads",sets:4,reps:5},
+            {name:"Snatch",type:"ramp",muscle:"Olympic",sets:5,reps:1},
+            {name:"OHS",type:"fixed",muscle:"Quads",sets:3,reps:5},
+            {name:"Ring Dips",type:"fixed",muscle:"Chest",sets:3,reps:10},
+            {name:"HSPU",type:"fixed",muscle:"Shoulders",sets:3,reps:8},
+            {name:"GHD Situp",type:"fixed",muscle:"Core",sets:3,reps:15},
+            {name:"Box Jump",type:"fixed",muscle:"Legs",sets:4,reps:10},
+            {name:"KB Swing",type:"fixed",muscle:"Posterior Chain",sets:3,reps:20},
+            {name:"AMRAP 10",type:"amrap",muscle:"Conditioning",sets:1,reps:null},
+            {name:"EMOM 10",type:"emom",muscle:"Conditioning",sets:10,reps:null},
+          ].map(e=>(
+            <button key={e.name} onClick={()=>{setExercises(ex=>[...ex,e]);setShowPicker(false);}} style={{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%",background:"transparent",border:"none",color:"#ccc",fontSize:13,fontFamily:"Barlow Condensed",fontWeight:600,padding:"7px 0",cursor:"pointer",textAlign:"left",borderBottom:"1px solid #1a1a2e"}}>
+              <span>{e.name}</span>
+              <span style={{fontSize:9,color:({ramp:"#00b4ff",fixed:"#4ade80",amrap:"#f97316",emom:"#facc15",fortime:"#f43f5e"})[e.type],fontFamily:"Barlow Condensed",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>{e.type}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Accessory block */}
+      {ACCESSORIES[activeWorkout?.id]&&(
+        <div style={{background:"#0f0f1a",border:"1px solid #2a1a3e",borderRadius:12,padding:"12px 14px",marginBottom:10}}>
+          <div style={{fontFamily:"Barlow Condensed",fontSize:11,fontWeight:700,color:"#a855f7",letterSpacing:2,textTransform:"uppercase",marginBottom:2}}>
+            💪 Accessory — ~{ACCESSORIES[activeWorkout.id].reduce((a,e)=>a+e.sets*2,0)} min
+          </div>
+          <div style={{fontSize:10,color:"#555",marginBottom:10}}>Isolation. 2min/set incl. rest. Don't skip.</div>
+          {ACCESSORIES[activeWorkout.id].map(ex=>(
+            <AccessoryLogger key={ex.name} ex={ex} log={accLogs[ex.name]||{}} setLog={v=>setAccLog(ex.name,v)}/>
+          ))}
+        </div>
+      )}
+
+      {/* Cooldown */}
+      <div style={{background:"#0f0f1a",border:"1px solid #1e1e30",borderRadius:12,padding:"10px 14px",marginBottom:14}}>
+        <div style={{fontFamily:"Barlow Condensed",fontSize:11,fontWeight:700,color:"#4ade80",letterSpacing:2,textTransform:"uppercase",marginBottom:5}}>🧘 Cooldown — 10 min</div>
+        {["Pigeon stretch 2min/side","Couch stretch 90s/side","Hamstring doorway stretch 60s","Child's pose 2min","Thoracic extension on roller 2min"].map(s=><div key={s} style={{fontSize:11,color:"#555",padding:"2px 0"}}>• {s}</div>)}
+      </div>
+    </div>
+  );
+}
+
+// ── WEEK EXPORT GENERATOR ─────────────────────────────────────────────────────
+
+function generateWeekExport(history, week) {
+  const sessions = history.filter(h => h.week === week);
+  if (!sessions.length) return `No sessions logged for W${week}.`;
+
+  const allWorkouts = Object.values(PLAN_WORKOUTS).flat();
+  const meso = getMesoForWeek(week);
+
+  let out = `=== W${week} TRAINING LOG — ${meso.name.toUpperCase()} ===\n`;
+  out += `Mesocycle ${meso.id} of 4 · ${sessions.length} sessions logged\n\n`;
+
+  sessions.forEach(h => {
+    const workout = allWorkouts.find(w => w.id === h.dayId);
+    out += `── ${h.dayId}: ${workout?.name || "Workout"} · ${h.date} · ${h.duration}min ──\n`;
+
+    (h.exercises || []).forEach(ex => {
+      const l = ex.rawLog || {};
+      out += `  ${ex.name}`;
+      if (ex.type === "ramp") {
+        const rows = (l.rows || []).filter(r => r.w);
+        if (rows.length) out += `: ${rows.map(r=>`${r.w}kg×${r.r}`).join(" / ")}`;
+        else out += `: ${ex.summary || "not logged"}`;
+      } else if (ex.type === "fixed") {
+        out += `: ${(l.checked||[]).length}/${ex.rawLog?.sets||"?"} sets @ ${l.weight||"?"}kg`;
+      } else if (ex.type === "emom") {
+        out += `: ${(l.intervals||[]).length} intervals completed`;
+        if (l.note) out += ` — "${l.note}"`;
+      } else if (ex.type === "amrap") {
+        out += `: ${l.rounds||0} rounds + ${l.reps||0} reps`;
+        if (l.note) out += ` — "${l.note}"`;
+      } else if (ex.type === "fortime") {
+        out += `: ${l.mm||"?"}:${String(l.ss||"0").padStart(2,"0")}`;
+        if (l.note) out += ` — "${l.note}"`;
+      } else {
+        out += `: ${ex.summary || "not logged"}`;
+      }
+      out += "\n";
+    });
+
+    if (h.accessories?.length) {
+      out += `  [Accessories]\n`;
+      h.accessories.forEach(acc => {
+        const l = acc.rawLog || {};
+        const sets = (l.checked||[]).length;
+        const w = l.weight;
+        out += `    ${acc.name}: ${sets} sets${w ? ` @ ${w}kg` : ""}\n`;
+      });
+    }
+    out += "\n";
+  });
+
+  out += `=== PASTE THIS TO CLAUDE FOR W${week+1} PROGRESSION ===`;
+  return out;
+}
+
+// ── HISTORY SCREEN ────────────────────────────────────────────────────────────
+
+function HistoryScreen({history, onDelete}) {
+  const allWorkouts=Object.values(PLAN_WORKOUTS).flat();
+  const [confirmId, setConfirmId] = useState(null);
+  const [exportWeek, setExportWeek] = useState(CURRENT_WEEK);
+  const [exportText, setExportText] = useState(null);
+  const [copied, setCopied] = useState(false);
+
+  const handleExport = () => {
+    const text = generateWeekExport(history, exportWeek);
+    setExportText(text);
+    setCopied(false);
+  };
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(exportText).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    });
+  };
+
+  return (
+    <div style={{padding:"0 16px 100px"}}>
+
+      {/* Export Week block */}
+      <div style={{background:"#0f0f1a",border:"1px solid #1e1e30",borderRadius:12,padding:"14px 16px",marginBottom:16}}>
+        <div style={{fontFamily:"Barlow Condensed",fontSize:12,fontWeight:700,color:"#888",letterSpacing:2,textTransform:"uppercase",marginBottom:10}}>📤 Export Week for Progression</div>
+        <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:10}}>
+          <div style={{display:"flex",alignItems:"center",gap:4,background:"#13131f",border:"1px solid #2a2a3e",borderRadius:8,padding:"4px 10px"}}>
+            <button onClick={()=>setExportWeek(w=>Math.max(37,w-1))} style={{background:"none",border:"none",color:"#888",cursor:"pointer",fontSize:14,lineHeight:1}}>‹</button>
+            <span style={{fontFamily:"Barlow Condensed",fontSize:13,fontWeight:700,color:"#ccc",minWidth:32,textAlign:"center"}}>W{exportWeek}</span>
+            <button onClick={()=>setExportWeek(w=>Math.min(52,w+1))} style={{background:"none",border:"none",color:"#888",cursor:"pointer",fontSize:14,lineHeight:1}}>›</button>
+          </div>
+          <button onClick={handleExport} style={{flex:1,background:"linear-gradient(135deg,#00b4ff,#0070cc)",border:"none",borderRadius:8,color:"#fff",fontFamily:"Barlow Condensed",fontSize:12,fontWeight:800,letterSpacing:2,padding:"10px",cursor:"pointer"}}>
+            GENERATE EXPORT
+          </button>
+        </div>
+        {exportText && (
+          <>
+            <textarea
+              readOnly value={exportText}
+              style={{width:"100%",background:"#080810",border:"1px solid #2a2a3e",borderRadius:8,color:"#888",fontSize:10,fontFamily:"monospace",padding:10,height:160,resize:"none",outline:"none",boxSizing:"border-box",lineHeight:1.5}}
+            />
+            <button onClick={handleCopy} style={{width:"100%",marginTop:6,background:copied?"#4ade8022":"#1a1a2e",border:`1px solid ${copied?"#4ade80":"#2a2a3e"}`,borderRadius:8,color:copied?"#4ade80":"#ccc",fontFamily:"Barlow Condensed",fontSize:12,fontWeight:700,letterSpacing:2,padding:"10px",cursor:"pointer",transition:"all 0.2s"}}>
+              {copied ? "✓ COPIED — PASTE TO CLAUDE" : "COPY TO CLIPBOARD"}
+            </button>
+          </>
+        )}
+      </div>
+
+      <div style={{fontFamily:"Barlow Condensed",fontSize:12,fontWeight:700,color:"#888",letterSpacing:2,textTransform:"uppercase",marginBottom:14}}>Recent Sessions</div>
+      {history.length===0 && <div style={{color:"#555",fontSize:13,textAlign:"center",marginTop:40}}>No sessions logged yet.</div>}
+      {history.map(h=>{
+        const meso=getMesoForWeek(h.week||CURRENT_WEEK), workout=allWorkouts.find(w=>w.id===h.dayId);
+        const totalSets=h.exercises.reduce((a,e)=>a+(e.sets?.length||0),0);
+        const isConfirming = confirmId === h.id;
+        return (
+          <div key={h.id} style={{background:"#0f0f1a",border:`1px solid ${isConfirming?"#f8717144":"#1e1e30"}`,borderRadius:12,padding:"12px 14px",marginBottom:8,transition:"border-color 0.2s"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:7}}>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{display:"flex",alignItems:"center",gap:7}}>
+                  <div style={{fontFamily:"Barlow Condensed",fontSize:16,fontWeight:800,color:"#fff"}}>{workout?.name||"Workout"}</div>
+                  {h.prs?.length>0&&<span style={{fontSize:13}}>🏆</span>}
+                </div>
+                <div style={{fontSize:11,color:"#888"}}>{fmt(h.date)} · {h.duration}min · {totalSets} sets</div>
+              </div>
+              <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:4,marginLeft:8,flexShrink:0}}>
+                <div style={{display:"flex",alignItems:"center",gap:6}}>
+                  <span style={{fontFamily:"Barlow Condensed",fontSize:9,fontWeight:700,color:meso.color,background:`${meso.color}18`,borderRadius:4,padding:"2px 6px"}}>{h.dayId}</span>
+                  {!isConfirming
+                    ? <button onClick={()=>setConfirmId(h.id)} style={{background:"transparent",border:"1px solid #2a2a3e",borderRadius:6,color:"#555",width:26,height:26,cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",justifyContent:"center"}} title="Delete">🗑</button>
+                    : <div style={{display:"flex",gap:4}}>
+                        <button onClick={()=>{onDelete(h.id);setConfirmId(null);}} style={{background:"#f87171",border:"none",borderRadius:6,color:"#fff",fontSize:10,fontFamily:"Barlow Condensed",fontWeight:700,padding:"4px 8px",cursor:"pointer",letterSpacing:1}}>DELETE</button>
+                        <button onClick={()=>setConfirmId(null)} style={{background:"#1a1a2e",border:"1px solid #2a2a3e",borderRadius:6,color:"#888",fontSize:10,fontFamily:"Barlow Condensed",fontWeight:700,padding:"4px 8px",cursor:"pointer",letterSpacing:1}}>CANCEL</button>
+                      </div>
+                  }
+                </div>
+                {h.week&&<span style={{fontFamily:"Barlow Condensed",fontSize:9,color:"#555"}}>W{h.week}</span>}
+              </div>
+            </div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
+              {h.exercises.map(ex=>{
+                const isPR=h.prs?.includes(ex.name), muscle=workout?.exercises.find(e=>e.name===ex.name)?.muscle, col=MUSCLE_COLORS[muscle]||"#444";
+                return <span key={ex.name} style={{fontSize:10,padding:"2px 7px",background:`${col}15`,border:`1px solid ${col}33`,color:col,borderRadius:20,fontFamily:"Barlow Condensed",fontWeight:700,letterSpacing:0.5}}>{isPR&&"🏆 "}{ex.name}</span>;
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── PROGRESS SCREEN ───────────────────────────────────────────────────────────
+
+function ProgressScreen() {
+  const maxSets=Math.max(...WEEKLY_VOLUME.map(v=>v.sets));
+  return (
+    <div style={{padding:"0 16px 100px"}}>
+      <div style={{fontFamily:"Barlow Condensed",fontSize:12,fontWeight:700,color:"#888",letterSpacing:2,textTransform:"uppercase",marginBottom:10}}>Weekly Volume by Muscle Group</div>
+      <div style={{background:"#0f0f1a",border:"1px solid #1e1e30",borderRadius:12,padding:14,marginBottom:20}}>
+        {WEEKLY_VOLUME.map(v=>{
+          const col=MUSCLE_COLORS[v.muscle.split(" ")[0]]||MUSCLE_COLORS[v.muscle.split("/")[0].trim()]||"#00b4ff";
+          return (
+            <div key={v.muscle} style={{marginBottom:9}}>
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
+                <div style={{fontFamily:"Barlow Condensed",fontSize:13,fontWeight:700,color:"#ccc"}}>{v.muscle}</div>
+                <div style={{fontFamily:"Barlow Condensed",fontSize:13,fontWeight:700,color:col}}>{v.sets} sets</div>
+              </div>
+              <div style={{height:7,background:"#1a1a2e",borderRadius:4,overflow:"hidden"}}>
+                <div style={{width:`${(v.sets/maxSets)*100}%`,height:"100%",background:`linear-gradient(90deg,${col}aa,${col})`,borderRadius:4}}/>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div style={{fontFamily:"Barlow Condensed",fontSize:12,fontWeight:700,color:"#888",letterSpacing:2,textTransform:"uppercase",marginBottom:10}}>Lift Progression</div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+        {Object.entries(PROGRESS_DATA).map(([name,data])=>{
+          const pr=INITIAL_PRS.find(p=>p.name===name), curr=data[data.length-1], diff=curr-data[data.length-2];
+          return (
+            <div key={name} style={{background:"#0f0f1a",border:"1px solid #1e1e30",borderRadius:12,padding:"11px 13px"}}>
+              <div style={{fontFamily:"Barlow Condensed",fontSize:13,fontWeight:800,color:"#fff",marginBottom:2,lineHeight:1.2}}>{name}</div>
+              <div style={{display:"flex",alignItems:"baseline",gap:5,marginBottom:5}}>
+                <div style={{fontFamily:"Barlow Condensed",fontSize:26,fontWeight:900,color:"#00b4ff",lineHeight:1}}>{curr}</div>
+                <div style={{fontSize:10,color:"#888"}}>kg</div>
+                {diff!==0&&<div style={{fontSize:10,color:diff>0?"#4ade80":"#f87171",fontFamily:"Barlow Condensed",fontWeight:700}}>{diff>0?"+":""}{diff}</div>}
+              </div>
+              <Sparkline data={data} color="#00b4ff"/>
+              {pr&&<div style={{fontSize:9,color:"#555",marginTop:3,fontFamily:"Barlow Condensed",letterSpacing:1}}>PR {pr.weight}kg · {fmt(pr.date)}</div>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── APP ───────────────────────────────────────────────────────────────────────
+
+const STORAGE_KEY = "athleteos-history-v1";
+
+function loadHistory() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return null;
+}
+
+function saveHistory(h) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(h)); } catch {}
+}
+
+function App() {
+  const [tab,setTab]=useState("dashboard");
+  const [history,setHistory]=useState(()=>{
+    const saved = loadHistory();
+    return saved !== null ? saved : DEMO_HISTORY;
+  });
+  const [activeWorkout,setActiveWorkout]=useState(null);
+  const [currentWeek,setCurrentWeek]=useState(CURRENT_WEEK);
+  const meso=getMesoForWeek(currentWeek);
+
+  // Persist on every history change
+  useEffect(()=>{ saveHistory(history); },[history]);
+
+  const startWorkout=w=>{setActiveWorkout(w);setTab("workout");};
+  const saveWorkout=s=>{setHistory(h=>[s,...h]);setTab("history");};
+  const deleteWorkout=id=>setHistory(h=>h.filter(w=>w.id!==id));
+
+  const NAV=[
+    {id:"dashboard",label:"Home",   icon:"⊞"},
+    {id:"workout",  label:"Workout",icon:"⚡"},
+    {id:"history",  label:"History",icon:"📋"},
+    {id:"progress", label:"Progress",icon:"📈"},
+    {id:"plan",     label:"Plan",   icon:"🗓"},
+  ];
+
+  return (
+    <>
+      <style>{FONT}{`
+        *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+        body{background:#080810;color:#fff;font-family:'Barlow',sans-serif;max-width:480px;margin:0 auto;}
+        input::-webkit-inner-spin-button{-webkit-appearance:none;}
+        input[type=number]{-moz-appearance:textfield;}
+        ::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:#080810;}::-webkit-scrollbar-thumb{background:#1e1e30;border-radius:2px;}
+        button:active{opacity:0.8;}
+      `}</style>
+
+      {/* Header */}
+      <div style={{position:"sticky",top:0,zIndex:50,background:"rgba(8,8,16,0.97)",backdropFilter:"blur(12px)",borderBottom:"1px solid #1e1e30",padding:"11px 18px 9px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div>
+            <div style={{fontFamily:"Barlow Condensed",fontSize:22,fontWeight:900,color:"#fff",letterSpacing:1,lineHeight:1}}>ATHLETE<span style={{color:"#00b4ff"}}>OS</span></div>
+            <div style={{fontSize:10,color:"#888",fontFamily:"Barlow Condensed",letterSpacing:2,textTransform:"uppercase"}}>
+              <span style={{color:meso.color}}>{meso.name}</span> · W{currentWeek} · 93→90kg
+            </div>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <div style={{display:"flex",alignItems:"center",gap:4,background:"#0f0f1a",border:"1px solid #1e1e30",borderRadius:8,padding:"4px 8px"}}>
+              <button onClick={()=>setCurrentWeek(w=>Math.max(37,w-1))} style={{background:"none",border:"none",color:"#888",cursor:"pointer",fontSize:14,lineHeight:1,padding:"0 2px"}}>‹</button>
+              <span style={{fontFamily:"Barlow Condensed",fontSize:12,fontWeight:700,color:"#ccc",minWidth:28,textAlign:"center"}}>W{currentWeek}</span>
+              <button onClick={()=>setCurrentWeek(w=>Math.min(52,w+1))} style={{background:"none",border:"none",color:"#888",cursor:"pointer",fontSize:14,lineHeight:1,padding:"0 2px"}}>›</button>
+            </div>
+            <div style={{width:32,height:32,borderRadius:"50%",background:`linear-gradient(135deg,${meso.color},${meso.color}88)`,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"Barlow Condensed",fontWeight:900,fontSize:13,color:"#000"}}>CF</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Title */}
+      <div style={{padding:"14px 16px 8px"}}>
+        <div style={{fontFamily:"Barlow Condensed",fontSize:28,fontWeight:900,color:"#fff",letterSpacing:1,lineHeight:1,textTransform:"uppercase"}}>
+          {tab==="dashboard"&&"Dashboard"}
+          {tab==="workout"&&(activeWorkout?activeWorkout.name.split("—")[1]?.trim():"Workout")}
+          {tab==="history"&&"History"}
+          {tab==="progress"&&"Progress"}
+          {tab==="plan"&&"16-Week Plan"}
+        </div>
+      </div>
+
+      {tab==="dashboard"&&<Dashboard history={history} onStartWorkout={startWorkout} currentWeek={currentWeek}/>}
+      {tab==="workout"  &&<WorkoutScreen initialWorkout={activeWorkout} onSave={saveWorkout} currentWeek={currentWeek}/>}
+      {tab==="history"  &&<HistoryScreen history={history} onDelete={deleteWorkout}/>}
+      {tab==="progress" &&<ProgressScreen/>}
+      {tab==="plan"     &&<PlanScreen currentWeek={currentWeek}/>}
+
+      {/* Bottom Nav */}
+      <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:480,background:"rgba(8,8,16,0.97)",backdropFilter:"blur(16px)",borderTop:"1px solid #1e1e30",display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr",padding:"7px 0 env(safe-area-inset-bottom,7px)",zIndex:100}}>
+        {NAV.map(n=>(
+          <button key={n.id} onClick={()=>setTab(n.id)} style={{background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"3px 0"}}>
+            <div style={{fontSize:17,lineHeight:1,filter:tab===n.id?"none":"grayscale(1) opacity(0.3)"}}>{n.icon}</div>
+            <div style={{fontFamily:"Barlow Condensed",fontSize:9,fontWeight:700,letterSpacing:1.5,textTransform:"uppercase",color:tab===n.id?meso.color:"#444",transition:"color 0.2s"}}>{n.label}</div>
+            {tab===n.id&&<div style={{width:14,height:2,background:meso.color,borderRadius:1}}/>}
+          </button>
+        ))}
+      </div>
+    </>
+  );
+}
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(React.createElement(App));
+
+    // Register service worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(r => console.log('SW registered'))
+          .catch(e => console.log('SW failed:', e));
+      });
+    }
+  </script>
+</body>
+</html>

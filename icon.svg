@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#080810" rx="80"/>
+  <text x="256" y="200" font-family="Arial Black,sans-serif" font-size="130" font-weight="900" fill="white" text-anchor="middle" dominant-baseline="middle">ATH</text>
+  <text x="256" y="340" font-family="Arial Black,sans-serif" font-size="130" font-weight="900" fill="#00b4ff" text-anchor="middle" dominant-baseline="middle">LETE</text>
+  <rect x="100" y="370" width="312" height="6" fill="#00b4ff" rx="3"/>
+</svg>
