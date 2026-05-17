@@ -11,7 +11,8 @@
       "Bash(/tmp/node_modules/.bin/babel --presets=@babel/preset-react /tmp/app.jsx -o /tmp/app.compiled.js)",
       "Bash(echo \"exit=$?\")",
       "Bash(node -e ' *)",
-      "Bash(rtk grep *)"
+      "Bash(rtk grep *)",
+      "Bash(rtk curl *)"
     ]
   }
 }

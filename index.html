@@ -1418,8 +1418,15 @@ function App() {
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(React.createElement(App));
 
-    // Register service worker
+    // Register service worker — reload once when a new SW takes control so a
+    // fresh deploy doesn't leave a stale app shell on screen.
     if ('serviceWorker' in navigator) {
+      let reloading = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (reloading) return;
+        reloading = true;
+        window.location.reload();
+      });
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
           .then(r => console.log('SW registered'))
