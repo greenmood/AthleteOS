@@ -1031,12 +1031,13 @@ function generateWeekExport(history, week) {
 
 // ── HISTORY SCREEN ────────────────────────────────────────────────────────────
 
-function HistoryScreen({history, onDelete}) {
+function HistoryScreen({history, onDelete, onImport}) {
   const allWorkouts=Object.values(PLAN_WORKOUTS).flat();
   const [confirmId, setConfirmId] = useState(null);
   const [exportWeek, setExportWeek] = useState(CURRENT_WEEK);
   const [exportText, setExportText] = useState(null);
   const [copied, setCopied] = useState(false);
+  const fileInputRef = useRef(null);
 
   const handleExport = () => {
     const text = generateWeekExport(history, exportWeek);
@@ -1062,6 +1063,25 @@ function HistoryScreen({history, onDelete}) {
     URL.revokeObjectURL(url);
   };
 
+  const handleImportFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      const incoming = Array.isArray(data) ? data : data?.history;
+      if (!Array.isArray(incoming)) throw new Error("File doesn't look like an AthleteOS backup.");
+      const valid = incoming.filter(s => s && typeof s.id === "string" && Array.isArray(s.exercises));
+      if (valid.length === 0) throw new Error("No valid sessions found.");
+      await onImport(valid);
+      alert(`Imported ${valid.length} session${valid.length===1?"":"s"}. (Merged by id — duplicates were overwritten.)`);
+    } catch (err) {
+      alert(`Import failed: ${err.message}`);
+    } finally {
+      e.target.value = ""; // allow re-import of the same file
+    }
+  };
+
   return (
     <div style={{padding:"0 16px 100px"}}>
 
@@ -1069,9 +1089,13 @@ function HistoryScreen({history, onDelete}) {
       <div style={{background:"#0f0f1a",border:"1px solid #1e1e30",borderRadius:12,padding:"12px 16px",marginBottom:10,display:"flex",justifyContent:"space-between",alignItems:"center",gap:8}}>
         <div style={{minWidth:0}}>
           <div style={{fontFamily:"Barlow Condensed",fontSize:12,fontWeight:700,color:"#888",letterSpacing:2,textTransform:"uppercase"}}>💾 Full Backup</div>
-          <div style={{fontSize:10,color:"#555",marginTop:2}}>{history.length} sessions · JSON download</div>
+          <div style={{fontSize:10,color:"#555",marginTop:2}}>{history.length} sessions · JSON</div>
         </div>
-        <button onClick={handleBackup} disabled={history.length===0} style={{background:"#1a1a2e",border:"1px solid #2a2a3e",borderRadius:8,color:history.length===0?"#444":"#ccc",fontFamily:"Barlow Condensed",fontSize:11,fontWeight:700,letterSpacing:1.5,padding:"8px 14px",cursor:history.length===0?"not-allowed":"pointer",whiteSpace:"nowrap"}}>↓ DOWNLOAD</button>
+        <div style={{display:"flex",gap:6,flexShrink:0}}>
+          <button onClick={()=>fileInputRef.current?.click()} style={{background:"#1a1a2e",border:"1px solid #2a2a3e",borderRadius:8,color:"#ccc",fontFamily:"Barlow Condensed",fontSize:11,fontWeight:700,letterSpacing:1.5,padding:"8px 12px",cursor:"pointer",whiteSpace:"nowrap"}}>↑ IMPORT</button>
+          <button onClick={handleBackup} disabled={history.length===0} style={{background:"#1a1a2e",border:"1px solid #2a2a3e",borderRadius:8,color:history.length===0?"#444":"#ccc",fontFamily:"Barlow Condensed",fontSize:11,fontWeight:700,letterSpacing:1.5,padding:"8px 12px",cursor:history.length===0?"not-allowed":"pointer",whiteSpace:"nowrap"}}>↓ EXPORT</button>
+        </div>
+        <input ref={fileInputRef} type="file" accept="application/json,.json" onChange={handleImportFile} style={{display:"none"}}/>
       </div>
 
       {/* Export Week block */}
@@ -1188,38 +1212,132 @@ function ProgressScreen() {
   );
 }
 
+// ── STORAGE (IndexedDB) ──────────────────────────────────────────────────────
+// One object store keyed by session id, with cheap indexes on week + date.
+// On first run we migrate the legacy localStorage blob (or seed DEMO_HISTORY)
+// and set INIT_FLAG so we never reseed after the user has emptied their log.
+
+const DB_NAME   = "athleteos";
+const STORE     = "sessions";
+const LEGACY_KEY = "athleteos-history-v1";
+const INIT_FLAG  = "athleteos-initialized-v1";
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(STORE)) {
+        const store = db.createObjectStore(STORE, { keyPath: "id" });
+        store.createIndex("week", "week");
+        store.createIndex("date", "date");
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror   = () => reject(req.error);
+  });
+}
+
+async function idbGetAll() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx  = db.transaction(STORE, "readonly");
+    const req = tx.objectStore(STORE).getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror   = () => reject(req.error);
+  });
+}
+
+async function idbPut(session) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, "readwrite");
+    tx.objectStore(STORE).put(session);
+    tx.oncomplete = () => resolve();
+    tx.onerror    = () => reject(tx.error);
+  });
+}
+
+async function idbDelete(id) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, "readwrite");
+    tx.objectStore(STORE).delete(id);
+    tx.oncomplete = () => resolve();
+    tx.onerror    = () => reject(tx.error);
+  });
+}
+
+async function idbBulkPut(sessions) {
+  if (!sessions.length) return;
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, "readwrite");
+    const store = tx.objectStore(STORE);
+    sessions.forEach(s => store.put(s));
+    tx.oncomplete = () => resolve();
+    tx.onerror    = () => reject(tx.error);
+  });
+}
+
+const byDateDesc = (a, b) => (b.date || "").localeCompare(a.date || "");
+
+async function initStorage() {
+  let sessions = [];
+  try { sessions = await idbGetAll(); }
+  catch (e) { console.warn("IDB load failed:", e); }
+
+  // First-run only: migrate legacy localStorage OR seed demo
+  if (sessions.length === 0 && !localStorage.getItem(INIT_FLAG)) {
+    const raw = localStorage.getItem(LEGACY_KEY);
+    const hadLegacy = raw !== null;
+    let migrated = [];
+    if (hadLegacy) { try { migrated = JSON.parse(raw); } catch {} }
+    const seed = hadLegacy
+      ? (Array.isArray(migrated) ? migrated : [])
+      : DEMO_HISTORY;
+    try { await idbBulkPut(seed); sessions = seed; }
+    catch (e) { console.warn("IDB seed failed:", e); sessions = seed; }
+    localStorage.setItem(INIT_FLAG, "1");
+    localStorage.removeItem(LEGACY_KEY);
+  }
+
+  // Ask the browser not to evict our data. Best-effort, no-op on iOS today.
+  if (navigator.storage?.persist) navigator.storage.persist().catch(() => {});
+
+  return sessions.sort(byDateDesc);
+}
+
 // ── APP ───────────────────────────────────────────────────────────────────────
-
-const STORAGE_KEY = "athleteos-history-v1";
-
-function loadHistory() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch {}
-  return null;
-}
-
-function saveHistory(h) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(h)); } catch {}
-}
 
 function App() {
   const [tab,setTab]=useState("dashboard");
-  const [history,setHistory]=useState(()=>{
-    const saved = loadHistory();
-    return saved !== null ? saved : DEMO_HISTORY;
-  });
+  const [history,setHistory]=useState(null); // null = still loading from IDB
   const [activeWorkout,setActiveWorkout]=useState(null);
   const [currentWeek,setCurrentWeek]=useState(CURRENT_WEEK);
   const meso=getMesoForWeek(currentWeek);
 
-  // Persist on every history change
-  useEffect(()=>{ saveHistory(history); },[history]);
+  // One-shot async load (with localStorage migration on first run)
+  useEffect(()=>{ initStorage().then(setHistory).catch(e=>{console.warn(e);setHistory([]);}); },[]);
 
   const startWorkout=w=>{setActiveWorkout(w);setTab("workout");};
-  const saveWorkout=s=>{setHistory(h=>[s,...h]);setTab("history");};
-  const deleteWorkout=id=>setHistory(h=>h.filter(w=>w.id!==id));
+
+  const saveWorkout=async s=>{
+    try { await idbPut(s); } catch (e) { console.warn("Save failed:", e); }
+    setHistory(h=>[s,...(h||[])]);
+    setTab("history");
+  };
+
+  const deleteWorkout=async id=>{
+    try { await idbDelete(id); } catch (e) { console.warn("Delete failed:", e); }
+    setHistory(h=>(h||[]).filter(w=>w.id!==id));
+  };
+
+  const importHistory=async incoming=>{
+    try { await idbBulkPut(incoming); } catch (e) { console.warn("Import failed:", e); throw e; }
+    const fresh = await idbGetAll();
+    setHistory(fresh.sort(byDateDesc));
+  };
 
   const NAV=[
     {id:"dashboard",label:"Home",   icon:"⊞"},
@@ -1271,11 +1389,17 @@ function App() {
         </div>
       </div>
 
-      {tab==="dashboard"&&<Dashboard history={history} onStartWorkout={startWorkout} currentWeek={currentWeek}/>}
-      {tab==="workout"  &&<WorkoutScreen initialWorkout={activeWorkout} onSave={saveWorkout} currentWeek={currentWeek}/>}
-      {tab==="history"  &&<HistoryScreen history={history} onDelete={deleteWorkout}/>}
-      {tab==="progress" &&<ProgressScreen/>}
-      {tab==="plan"     &&<PlanScreen currentWeek={currentWeek}/>}
+      {history===null ? (
+        <div style={{padding:40,textAlign:"center",color:"#555",fontFamily:"Barlow Condensed",fontSize:12,letterSpacing:2,textTransform:"uppercase"}}>Loading…</div>
+      ) : (
+        <>
+          {tab==="dashboard"&&<Dashboard history={history} onStartWorkout={startWorkout} currentWeek={currentWeek}/>}
+          {tab==="workout"  &&<WorkoutScreen initialWorkout={activeWorkout} onSave={saveWorkout} currentWeek={currentWeek}/>}
+          {tab==="history"  &&<HistoryScreen history={history} onDelete={deleteWorkout} onImport={importHistory}/>}
+          {tab==="progress" &&<ProgressScreen/>}
+          {tab==="plan"     &&<PlanScreen currentWeek={currentWeek}/>}
+        </>
+      )}
 
       {/* Bottom Nav */}
       <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:480,background:"rgba(8,8,16,0.97)",backdropFilter:"blur(16px)",borderTop:"1px solid #1e1e30",display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr",padding:"7px 0 env(safe-area-inset-bottom,7px)",zIndex:100}}>
