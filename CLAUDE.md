@@ -31,6 +31,14 @@ A CrossFit training tracker PWA built for a specific athlete. All workouts, prog
 | Snatch | 50kg | — |
 | OHS | 50kg | — |
 
+### Current Working Maxes
+Use these — not the PR table — when computing %-based loads for prescriptions. PRs above are historical; these reflect what the athlete can actually load *today*. Re-check at the end of each mesocycle.
+
+| Lift | Working Max | As of | Notes |
+|---|---|---|---|
+| Front Squat | 125kg | W37 / 2026-05-17 | PR (135kg, Apr 2025) is stale; 80% of PR (108kg × 6 × 5) was too heavy. Re-test in Meso 3 Peaking (W45–48). |
+| Clean & Jerk Complex | 80kg baseline | W37 / 2026-05-17 | Athlete computes complex % from 80kg (Hang Power Clean PR), not from full C&J 1RM — full C&J is technique-limited, not strength-limited. Re-check after Meso 4 (W51 test). |
+
 ### Skills / Limitations
 - **Cannot do bar muscle-ups** — use C2B pull-ups or ring dips as substitution
 - All weights and distances in **metric** (kg, cm, m, cal)
@@ -99,7 +107,7 @@ When the athlete pastes a weekly export (generated from History → Export Week)
 athleteos-pwa/
 ├── index.html      — Full app (React via CDN + Babel, all logic inline)
 ├── manifest.json   — PWA manifest (name, icons, display: standalone)
-├── sw.js           — Service worker (cache-first, offline support)
+├── sw.js           — Service worker (network-first HTML, cache-first assets; bump `CACHE` on each release)
 ├── icon-192.png    — Home screen icon
 ├── icon-512.png    — Splash screen icon
 └── CLAUDE.md       — This file
@@ -109,7 +117,7 @@ athleteos-pwa/
 
 - **React 18** via CDN (unpkg), no build step
 - **Babel standalone** for JSX transpilation in-browser
-- **localStorage** for persistence (key: `athleteos-history-v1`)
+- **IndexedDB** for persistence — DB `athleteos`, object store `sessions` (keyed by `id`, indexed on `week` + `date`). One-shot migration from legacy `localStorage["athleteos-history-v1"]` runs on first load; `localStorage["athleteos-initialized-v1"]` flag prevents reseeding `DEMO_HISTORY` after the user empties their log. `navigator.storage.persist()` is requested on init.
 - **No external dependencies** beyond React + Babel CDN
 - **Styling:** inline styles only, Barlow Condensed font (Google Fonts)
 - **Theme:** dark background `#080810`, electric blue `#00b4ff` accent
@@ -141,4 +149,4 @@ Each exercise has a `type` field that controls the logger UI:
 - Progress charts use hardcoded seed data — not yet reading from logged history
 - Streak counter is hardcoded to 4 — needs to calculate from actual history dates
 - No PR detection on finish — currently all sessions saved with `prs: []`
-- Consider switching localStorage to IndexedDB for better iOS PWA persistence guarantees
+- `CURRENT_WEEK = 37` in index.html is hardcoded — never auto-advances; needs to derive from current date

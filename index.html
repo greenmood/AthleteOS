@@ -201,6 +201,54 @@ const PLAN_WORKOUTS = {
   ],
 };
 
+// ── WEEK OVERRIDES ───────────────────────────────────────────────────────────
+// Per-week prescriptions that override the meso template. Used when a specific
+// week's loads/metcons differ from the typical meso template (e.g. recalibrated
+// working max, fresh metcon variety). `getWorkoutsForWeek` consults this map
+// first and falls back to `PLAN_WORKOUTS[mesoId]`.
+const WEEK_PLANS = {
+  38: [
+    {
+      id:"D1", name:"Day 1 — Snatch + Squat", focus:["Olympic","Legs"],
+      exercises:[
+        {name:"Hang Squat Snatch",   muscle:"Olympic",       sets:5,  reps:3,  note:"5×3 @65–70% (~36–39kg) — positional focus", pct:68, type:"ramp"},
+        {name:"Front Squat",         muscle:"Quads",         sets:5,  reps:6,  note:"5×6 @100kg — recalibrated off ~125kg working max (PR 135kg is stale)", pct:80, type:"fixed"},
+        {name:"Single-Leg RDL",      muscle:"Hamstrings",    sets:3,  reps:10, note:"3×10/side — DB, slow eccentric", type:"fixed"},
+        {name:"EMOM 15 — Bike/Lunges/Burpee", muscle:"Conditioning", sets:15, reps:null, note:"Min1: 14cal bike | Min2: 12 alt lunges | Min3: 10 burpees", type:"emom"},
+      ],
+    },
+    {
+      id:"D2", name:"Day 2 — Bench + Press", focus:["Chest","Shoulders"],
+      exercises:[
+        {name:"Bench Press — Heavy 6",  muscle:"Chest",     sets:1, reps:6,  note:"Heavy 6 (~100–105kg)", type:"ramp"},
+        {name:"Bench Press — Back-off", muscle:"Chest",     sets:3, reps:6,  note:"3×6 @90% of heavy 6", type:"fixed"},
+        {name:"Push Press",             muscle:"Shoulders", sets:5, reps:5,  note:"5×5 @75–80% (~60–64kg)", pct:78, type:"fixed"},
+        {name:"DB Strict Press",        muscle:"Shoulders", sets:3, reps:12, note:"Accessory — full ROM", type:"fixed"},
+        {name:"AMRAP 20 — Ski/TTB/Row", muscle:"Conditioning", sets:1, reps:null, note:"AMRAP20: 20cal ski + 15 TTB + 20cal row", type:"amrap"},
+      ],
+    },
+    {
+      id:"D3", name:"Day 3 — C&J + Deadlift", focus:["Olympic","Back"],
+      exercises:[
+        {name:"Clean & Jerk Complex", muscle:"Olympic",         sets:4, reps:null, note:"4 sets: 3 clean + 2 jerk @58.5kg (73% of 80kg HPC baseline)", pct:73, type:"ramp"},
+        {name:"Deadlift",             muscle:"Posterior Chain", sets:5, reps:5,    note:"5×5 @137.5kg — no belt", pct:76, type:"fixed"},
+        {name:"GHD Hip Extension",    muscle:"Hamstrings",      sets:3, reps:12,   note:"Slow, controlled — posterior chain acc", type:"fixed"},
+        {name:"AMRAP 15 — Bike/WB/Burpee", muscle:"Conditioning", sets:1, reps:null, note:"AMRAP15: 15cal bike + 10 wall balls @9kg + 5 burpees", type:"amrap"},
+      ],
+    },
+    {
+      id:"D4", name:"Day 4 — Press + Pull", focus:["Shoulders","Back"],
+      exercises:[
+        {name:"Strict Press — Heavy 6",  muscle:"Shoulders", sets:1, reps:6, note:"Heavy 6 — aim +1–2kg vs W37 (~63–67kg)", type:"ramp"},
+        {name:"Strict Press — Back-off", muscle:"Shoulders", sets:3, reps:6, note:"3×6 @90% of heavy 6", type:"fixed"},
+        {name:"Weighted Pull-ups",       muscle:"Back",      sets:5, reps:5, note:"5×5 @12.5–15kg added", type:"fixed"},
+        {name:"Toes-to-Bar",             muscle:"Core",      sets:4, reps:12, note:"Strict — anti-flexion", type:"fixed"},
+        {name:"5 Rounds — Run/KBS/Box",  muscle:"Conditioning", sets:5, reps:null, note:"5 Rds For Time: 200m run + 12 KB swings @24kg + 10 box jumps @60cm", type:"fortime"},
+      ],
+    },
+  ],
+};
+
 // ── ACCESSORY BLOCKS ─────────────────────────────────────────────────────────
 // Keyed by day ID. Each meso has slightly progressed load/reps.
 
@@ -290,7 +338,7 @@ const WEEKLY_VOLUME = [
 // ── HELPERS ──────────────────────────────────────────────────────────────────
 
 function getMesoForWeek(w) { return MESOS.find(m => m.weeks.includes(w)) || MESOS[0]; }
-function getWorkoutsForWeek(w) { return PLAN_WORKOUTS[getMesoForWeek(w).id]; }
+function getWorkoutsForWeek(w) { return WEEK_PLANS[w] || PLAN_WORKOUTS[getMesoForWeek(w).id]; }
 function fmt(d) { return new Date(d).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"2-digit"}); }
 
 // Honest duration estimate:
