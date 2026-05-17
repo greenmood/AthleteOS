@@ -12,7 +12,8 @@
       "Bash(echo \"exit=$?\")",
       "Bash(node -e ' *)",
       "Bash(rtk grep *)",
-      "Bash(rtk curl *)"
+      "Bash(rtk curl *)",
+      "Bash(rtk git *)"
     ]
   }
 }
