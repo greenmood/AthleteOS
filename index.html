@@ -1450,12 +1450,12 @@ function App() {
       )}
 
       {/* Bottom Nav */}
-      <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:480,background:"rgba(8,8,16,0.97)",backdropFilter:"blur(16px)",borderTop:"1px solid #1e1e30",display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr",padding:"10px 0 calc(env(safe-area-inset-bottom, 0px) + 8px)",zIndex:100}}>
+      <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:480,background:"rgba(8,8,16,0.97)",backdropFilter:"blur(16px)",borderTop:"1px solid #1e1e30",display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr",padding:"10px 0 10px",zIndex:100}}>
         {NAV.map(n=>(
-          <button key={n.id} onClick={()=>setTab(n.id)} style={{background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"3px 0"}}>
-            <div style={{fontSize:17,lineHeight:1,filter:tab===n.id?"none":"grayscale(1) opacity(0.3)"}}>{n.icon}</div>
-            <div style={{fontFamily:"Barlow Condensed",fontSize:9,fontWeight:700,letterSpacing:1.5,textTransform:"uppercase",color:tab===n.id?meso.color:"#444",transition:"color 0.2s"}}>{n.label}</div>
-            {tab===n.id&&<div style={{width:14,height:2,background:meso.color,borderRadius:1}}/>}
+          <button key={n.id} onClick={()=>setTab(n.id)} style={{background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"5px 0"}}>
+            <div style={{fontSize:22,lineHeight:1,filter:tab===n.id?"none":"grayscale(1) opacity(0.3)"}}>{n.icon}</div>
+            <div style={{fontFamily:"Barlow Condensed",fontSize:10,fontWeight:700,letterSpacing:1.5,textTransform:"uppercase",color:tab===n.id?meso.color:"#444",transition:"color 0.2s"}}>{n.label}</div>
+            {tab===n.id&&<div style={{width:16,height:2,background:meso.color,borderRadius:1,marginTop:2}}/>}
           </button>
         ))}
       </div>
