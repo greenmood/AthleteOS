@@ -214,7 +214,7 @@ const WEEK_PLANS = {
         {name:"Hang Squat Snatch",   muscle:"Olympic",       sets:5,  reps:3,  note:"5×3 @65–70% (~36–39kg) — positional focus", pct:68, type:"ramp"},
         {name:"Front Squat",         muscle:"Quads",         sets:5,  reps:6,  note:"5×6 @100kg — recalibrated off ~125kg working max (PR 135kg is stale)", pct:80, type:"fixed"},
         {name:"Single-Leg RDL",      muscle:"Hamstrings",    sets:3,  reps:10, note:"3×10/side — 1×18kg DB opposite hand, 3s eccentric", type:"fixed"},
-        {name:"EMOM 15 — Bike/Lunges/Burpee", muscle:"Conditioning", sets:15, reps:null, note:"Min1: 14cal bike | Min2: 12 alt lunges @2×10kg DBs (or BW if legs fried) | Min3: 10 burpees", type:"emom"},
+        {name:"EMOM 15 — Bike/Lunges/Burpee", muscle:"Conditioning", sets:15, reps:null, note:"Min1: 14cal bike | Min2: 12 alt lunges @2×10kg DBs (or bodyweight if legs fried) | Min3: 10 burpees", type:"emom"},
       ],
     },
     {
@@ -254,24 +254,24 @@ const WEEK_PLANS = {
 
 const ACCESSORIES = {
   D1: [
-    { name: "Hip Thrust",             muscle: "Glutes",        sets: 3, reps: 12, note: "3×12 — DB or barbell, full glute squeeze at top. Primary glute builder, offloads lower back." },
+    { name: "Hip Thrust",             muscle: "Glutes",        sets: 3, reps: 12, note: "3×12 @60kg barbell across hips (or 30–35kg DB on lap). Full glute squeeze at top. Primary glute builder, offloads lower back." },
     { name: "Tibialis Raise",         muscle: "Tibialis",      sets: 3, reps: 20, note: "3×20 — wall lean or seated. Dorsiflexion. Knee health under squat volume." },
-    { name: "Band External Rotation", muscle: "Rotator Cuff",  sets: 3, reps: 15, note: "3×15/side — elbow at 90°, slow and controlled. Shoulder health for snatch/OHS." },
+    { name: "Band External Rotation", muscle: "Rotator Cuff",  sets: 3, reps: 15, note: "3×15/side — light band (~3–5kg tension), elbow at 90°, slow and controlled. Shoulder health for snatch/OHS." },
   ],
   D2: [
-    { name: "Lateral Raise",  muscle: "Shoulders",  sets: 4, reps: 15, note: "4×15 — light DB, slight forward lean, no momentum. Builds shoulder width." },
-    { name: "Face Pull",      muscle: "Rear Delts", sets: 3, reps: 20, note: "3×20 — cable at eye level, external rotate at end. Posture + shoulder health." },
-    { name: "Tricep Pushdown",muscle: "Triceps",    sets: 3, reps: 15, note: "3×15 — cable or band, elbows locked at sides. Direct tricep volume." },
+    { name: "Lateral Raise",  muscle: "Shoulders",  sets: 4, reps: 15, note: "4×15 @2×6kg DBs, slight forward lean, no momentum. Builds shoulder width." },
+    { name: "Face Pull",      muscle: "Rear Delts", sets: 3, reps: 20, note: "3×20 @15kg cable (or medium band) at eye level, external rotate at end. Posture + shoulder health." },
+    { name: "Tricep Pushdown",muscle: "Triceps",    sets: 3, reps: 15, note: "3×15 @20kg cable (or medium band), elbows locked at sides. Direct tricep volume." },
   ],
   D3: [
-    { name: "Hip Thrust — Heavy",    muscle: "Glutes",    sets: 4, reps: 10, note: "4×10 — barbell, heavier than D1. Primary posterior chain isolation." },
-    { name: "Banded Hamstring Curl", muscle: "Hamstrings", sets: 3, reps: 15, note: "3×15 — prone or seated machine. Direct hamstring isolation missing from program." },
-    { name: "Calf Raise",            muscle: "Calves",    sets: 4, reps: 20, note: "4×20 — slow 3s eccentric. Single-leg if easy. Knee + ankle health under squat load." },
+    { name: "Hip Thrust — Heavy",    muscle: "Glutes",    sets: 4, reps: 10, note: "4×10 @85kg barbell across hips. Heavier than D1 (60kg). Primary posterior chain isolation." },
+    { name: "Banded Hamstring Curl", muscle: "Hamstrings", sets: 3, reps: 15, note: "3×15 @25kg machine (prone or seated) — or heavy band if no machine. Direct hamstring isolation missing from program." },
+    { name: "Calf Raise",            muscle: "Calves",    sets: 4, reps: 20, note: "4×20 @2×15kg DBs (or single-leg bodyweight if no DBs). Slow 3s eccentric. Knee + ankle health under squat load." },
   ],
   D4: [
-    { name: "Barbell Curl",    muscle: "Biceps",     sets: 3, reps: 12, note: "3×12 — strict, no swing. Zero direct bicep work anywhere else in program." },
-    { name: "Face Pull",       muscle: "Rear Delts", sets: 3, reps: 20, note: "3×20 — high frequency intentional. Counteracts heavy pressing volume." },
-    { name: "Band Pull-Apart", muscle: "Rear Delts", sets: 3, reps: 25, note: "3×25 — light band, arms straight. Scapular health for overhead and Olympic work." },
+    { name: "Barbell Curl",    muscle: "Biceps",     sets: 3, reps: 12, note: "3×12 @25kg barbell, strict, no swing. Zero direct bicep work anywhere else in program." },
+    { name: "Face Pull",       muscle: "Rear Delts", sets: 3, reps: 20, note: "3×20 @15kg cable (or medium band). High frequency intentional — counteracts heavy pressing volume." },
+    { name: "Band Pull-Apart", muscle: "Rear Delts", sets: 3, reps: 25, note: "3×25 — light band (~5–8kg tension), arms straight. Scapular health for overhead and Olympic work." },
   ],
 };
 
@@ -1407,7 +1407,7 @@ function App() {
       `}</style>
 
       {/* Header */}
-      <div style={{position:"sticky",top:0,zIndex:50,background:"rgba(8,8,16,0.97)",backdropFilter:"blur(12px)",borderBottom:"1px solid #1e1e30",padding:"11px 18px 9px"}}>
+      <div style={{position:"sticky",top:0,zIndex:50,background:"rgba(8,8,16,0.97)",backdropFilter:"blur(12px)",borderBottom:"1px solid #1e1e30",padding:"calc(11px + env(safe-area-inset-top, 0px)) 18px 9px"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <div>
             <div style={{fontFamily:"Barlow Condensed",fontSize:22,fontWeight:900,color:"#fff",letterSpacing:1,lineHeight:1}}>ATHLETE<span style={{color:"#00b4ff"}}>OS</span></div>
@@ -1450,7 +1450,7 @@ function App() {
       )}
 
       {/* Bottom Nav */}
-      <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:480,background:"rgba(8,8,16,0.97)",backdropFilter:"blur(16px)",borderTop:"1px solid #1e1e30",display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr",padding:"7px 0 env(safe-area-inset-bottom,7px)",zIndex:100}}>
+      <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:480,background:"rgba(8,8,16,0.97)",backdropFilter:"blur(16px)",borderTop:"1px solid #1e1e30",display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr",padding:"10px 0 calc(env(safe-area-inset-bottom, 0px) + 8px)",zIndex:100}}>
         {NAV.map(n=>(
           <button key={n.id} onClick={()=>setTab(n.id)} style={{background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"3px 0"}}>
             <div style={{fontSize:17,lineHeight:1,filter:tab===n.id?"none":"grayscale(1) opacity(0.3)"}}>{n.icon}</div>
