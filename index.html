@@ -396,7 +396,8 @@ function useTimer(running) {
 
   useEffect(() => {
     if (running) {
-      startRef.current = Date.now();
+      // Preserve startRef if setFromBase already anchored it this tick.
+      if (!startRef.current) startRef.current = Date.now();
       const id = setInterval(() => {
         setElapsed(baseRef.current + Math.floor((Date.now() - startRef.current) / 1000));
       }, 500); // poll every 500ms — snappy UI, low cost
@@ -404,13 +405,28 @@ function useTimer(running) {
     } else {
       // Paused: snapshot current elapsed into base
       baseRef.current = elapsed;
+      startRef.current = null;
     }
   }, [running]);
 
   const reset = () => { baseRef.current = 0; startRef.current = null; setElapsed(0); };
+
+  // Restore the timer to `seconds` elapsed. If `running` is currently true,
+  // anchor a fresh wall-clock start so subsequent ticks keep counting forward.
+  const setFromBase = (seconds) => {
+    baseRef.current = seconds;
+    startRef.current = running ? Date.now() : null;
+    setElapsed(seconds);
+  };
+
+  // Live elapsed read at call time (not the stale React state) — for persistence snapshots.
+  const getCurrentElapsed = () => startRef.current
+    ? baseRef.current + Math.floor((Date.now() - startRef.current) / 1000)
+    : baseRef.current;
+
   const mm = String(Math.floor(elapsed / 60)).padStart(2, "0");
   const ss = String(elapsed % 60).padStart(2, "0");
-  return { display: `${mm}:${ss}`, elapsed, reset };
+  return { display: `${mm}:${ss}`, elapsed, reset, setFromBase, getCurrentElapsed };
 }
 
 function Sparkline({data,color="#00b4ff"}) {
@@ -855,13 +871,93 @@ function WorkoutScreen({initialWorkout,onSave,currentWeek}) {
   const [accLogs,setAccLogs]=useState({});
   const [showPicker,setShowPicker]=useState(false);
   const [confirmDiscard,setConfirmDiscard]=useState(false);
+  const [restored,setRestored]=useState(false);
   const timer=useTimer(started && !paused);
   const meso=getMesoForWeek(currentWeek);
   const weekWorkouts=getWorkoutsForWeek(currentWeek);
+  const saveTimeoutRef=useRef(null);
+  const initialMountRef=useRef(true);
 
+  // Mount: try to rehydrate an in-progress session from IDB so iOS killing
+  // the PWA mid-workout doesn't wipe logged sets. Subsequent initialWorkout
+  // changes (user picks a new workout from Dashboard) start fresh.
   useEffect(()=>{
-    if(initialWorkout){setActiveWorkout(initialWorkout);setExercises(initialWorkout.exercises);setStarted(true);setPaused(false);setLogs({});setAccLogs({});setConfirmDiscard(false);}
+    if(initialMountRef.current){
+      initialMountRef.current = false;
+      let cancelled = false;
+      idbLoadActive().then(active=>{
+        if(cancelled) return;
+        const fresh = active && active.workout && Date.now() - (active.savedAt||0) < ACTIVE_TTL_MS;
+        // If the user just clicked a *different* workout from Dashboard, honor that
+        // click — clear the persisted session and start fresh with the new prop.
+        const matchesProp = !initialWorkout || (fresh && active.workout.id === initialWorkout.id);
+        if(fresh && matchesProp){
+          setActiveWorkout(active.workout);
+          setExercises(active.exercises || active.workout.exercises || []);
+          setLogs(active.logs || {});
+          setAccLogs(active.accLogs || {});
+          setPaused(!!active.paused);
+          timer.setFromBase(active.elapsed || 0);
+          setStarted(true);
+        } else if (active) {
+          idbClearActive().catch(()=>{});
+        }
+        setRestored(true);
+      }).catch(e=>{console.warn("Active load failed:",e); setRestored(true);});
+      return ()=>{cancelled=true;};
+    }
+    if(initialWorkout){
+      setActiveWorkout(initialWorkout);
+      setExercises(initialWorkout.exercises);
+      setStarted(true);
+      setPaused(false);
+      setLogs({});
+      setAccLogs({});
+      setConfirmDiscard(false);
+      timer.reset();
+      idbClearActive().catch(()=>{});
+    }
   },[initialWorkout]);
+
+  // Persist active session: debounced on input changes + 15s safety-net interval.
+  useEffect(()=>{
+    if(!restored || !started || !activeWorkout) return;
+    const save = () => {
+      idbSaveActive({
+        workout: activeWorkout,
+        exercises, logs, accLogs, paused,
+        elapsed: timer.getCurrentElapsed(),
+        savedAt: Date.now()
+      }).catch(e => console.warn("Active save:", e));
+    };
+    if(saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(save, 500);
+    const intervalId = setInterval(save, 15000);
+    return () => {
+      if(saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+      clearInterval(intervalId);
+    };
+  },[restored, started, activeWorkout, exercises, logs, accLogs, paused]);
+
+  // Flush to IDB the moment iOS hides the tab / kills the PWA.
+  useEffect(()=>{
+    if(!restored || !started || !activeWorkout) return;
+    const flush = () => {
+      idbSaveActive({
+        workout: activeWorkout,
+        exercises, logs, accLogs, paused,
+        elapsed: timer.getCurrentElapsed(),
+        savedAt: Date.now()
+      }).catch(()=>{});
+    };
+    const onVis = () => { if(document.hidden) flush(); };
+    window.addEventListener("pagehide", flush);
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      window.removeEventListener("pagehide", flush);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  },[restored, started, activeWorkout, exercises, logs, accLogs, paused]);
 
   const setLog=(name,val)=>setLogs(l=>({...l,[name]:val}));
   const setAccLog=(name,val)=>setAccLogs(l=>({...l,[name]:val}));
@@ -893,8 +989,12 @@ function WorkoutScreen({initialWorkout,onSave,currentWeek}) {
       prs:[]
     });
     setStarted(false);setPaused(false);setActiveWorkout(null);setExercises([]);setLogs({});setAccLogs({});setConfirmDiscard(false);timer.reset();
+    idbClearActive().catch(()=>{});
   };
-  const discard=()=>{setStarted(false);setPaused(false);setActiveWorkout(null);setExercises([]);setLogs({});setAccLogs({});setConfirmDiscard(false);timer.reset();};
+  const discard=()=>{
+    setStarted(false);setPaused(false);setActiveWorkout(null);setExercises([]);setLogs({});setAccLogs({});setConfirmDiscard(false);timer.reset();
+    idbClearActive().catch(()=>{});
+  };
 
   if(!activeWorkout) return (
     <div style={{padding:"0 16px 100px"}}>
@@ -1265,20 +1365,25 @@ function ProgressScreen() {
 // On first run we migrate the legacy localStorage blob (or seed DEMO_HISTORY)
 // and set INIT_FLAG so we never reseed after the user has emptied their log.
 
-const DB_NAME   = "athleteos";
-const STORE     = "sessions";
-const LEGACY_KEY = "athleteos-history-v1";
-const INIT_FLAG  = "athleteos-initialized-v1";
+const DB_NAME     = "athleteos";
+const STORE       = "sessions";
+const ACTIVE_STORE = "active";        // crash-resilient in-progress workout state
+const LEGACY_KEY  = "athleteos-history-v1";
+const INIT_FLAG   = "athleteos-initialized-v1";
+const ACTIVE_TTL_MS = 24 * 60 * 60 * 1000; // discard restored sessions older than 24h
 
 function openDB() {
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, 1);
+    const req = indexedDB.open(DB_NAME, 2);
     req.onupgradeneeded = e => {
       const db = e.target.result;
       if (!db.objectStoreNames.contains(STORE)) {
         const store = db.createObjectStore(STORE, { keyPath: "id" });
         store.createIndex("week", "week");
         store.createIndex("date", "date");
+      }
+      if (!db.objectStoreNames.contains(ACTIVE_STORE)) {
+        db.createObjectStore(ACTIVE_STORE, { keyPath: "id" });
       }
     };
     req.onsuccess = () => resolve(req.result);
@@ -1328,6 +1433,37 @@ async function idbBulkPut(sessions) {
   });
 }
 
+// Active in-progress session: single record keyed "current".
+async function idbSaveActive(state) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(ACTIVE_STORE, "readwrite");
+    tx.objectStore(ACTIVE_STORE).put({ ...state, id: "current" });
+    tx.oncomplete = () => resolve();
+    tx.onerror    = () => reject(tx.error);
+  });
+}
+
+async function idbLoadActive() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx  = db.transaction(ACTIVE_STORE, "readonly");
+    const req = tx.objectStore(ACTIVE_STORE).get("current");
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror   = () => reject(req.error);
+  });
+}
+
+async function idbClearActive() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(ACTIVE_STORE, "readwrite");
+    tx.objectStore(ACTIVE_STORE).delete("current");
+    tx.oncomplete = () => resolve();
+    tx.onerror    = () => reject(tx.error);
+  });
+}
+
 const byDateDesc = (a, b) => (b.date || "").localeCompare(a.date || "");
 
 async function initStorage() {
@@ -1366,7 +1502,15 @@ function App() {
   const meso=getMesoForWeek(currentWeek);
 
   // One-shot async load (with localStorage migration on first run)
-  useEffect(()=>{ initStorage().then(setHistory).catch(e=>{console.warn(e);setHistory([]);}); },[]);
+  // Also auto-switches to the Workout tab if there's a recoverable in-progress session.
+  useEffect(()=>{
+    initStorage().then(setHistory).catch(e=>{console.warn(e);setHistory([]);});
+    idbLoadActive().then(active=>{
+      if(active && Date.now() - (active.savedAt||0) < ACTIVE_TTL_MS){
+        setTab("workout");
+      }
+    }).catch(()=>{});
+  },[]);
 
   const startWorkout=w=>{setActiveWorkout(w);setTab("workout");};
 
