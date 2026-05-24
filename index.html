@@ -247,6 +247,119 @@ const WEEK_PLANS = {
       ],
     },
   ],
+  39: [
+    {
+      id:"D1", name:"Day 1 — Snatch + Squat", focus:["Olympic","Legs"],
+      exercises:[
+        {name:"Hang Squat Snatch",   muscle:"Olympic",       sets:5,  reps:3,  note:"5×3 @65–70% (~36–39kg) — positional focus", pct:68, type:"ramp"},
+        {name:"Front Squat",         muscle:"Quads",         sets:5,  reps:6,  note:"5×6 @100kg — HELD from W38 (set 4 fail, party-affected; retest fresh)", pct:80, type:"fixed"},
+        {name:"Single-Leg RDL",      muscle:"Hamstrings",    sets:3,  reps:10, note:"3×10/side @1×20kg DB opposite hand (+2.5kg from W38 — felt easy)", type:"fixed"},
+        {name:"EMOM 15 — Bike/Lunges/Burpee", muscle:"Conditioning", sets:15, reps:null, note:"Min1: 14cal bike | Min2: 12 alt lunges @2×10kg DBs (or bodyweight if fried) | Min3: 10 burpees — push past min 10 (W38 tap-out)", type:"emom"},
+      ],
+    },
+    {
+      id:"D2", name:"Day 2 — Bench + Press", focus:["Chest","Shoulders"],
+      exercises:[
+        {name:"Bench Press — Heavy 6",  muscle:"Chest",     sets:1, reps:6,  note:"Heavy 6 — aim +1–2kg vs W38 top single if it went clean", type:"ramp"},
+        {name:"Bench Press — Back-off", muscle:"Chest",     sets:3, reps:6,  note:"3×6 @90% of heavy 6", type:"fixed"},
+        {name:"Push Press",             muscle:"Shoulders", sets:5, reps:5,  note:"5×5 @62.5–66.5kg (+2.5kg from W38)", pct:80, type:"fixed"},
+        {name:"DB Strict Press",        muscle:"Shoulders", sets:3, reps:12, note:"Accessory — full ROM", type:"fixed"},
+        {name:"AMRAP 20 — Ski/TTB/Row", muscle:"Conditioning", sets:1, reps:null, note:"AMRAP20: 20cal ski + 15 TTB + 20cal row — beat last week's score", type:"amrap"},
+      ],
+    },
+    {
+      id:"D3", name:"Day 3 — C&J + Deadlift", focus:["Olympic","Back"],
+      exercises:[
+        {name:"Clean & Jerk Complex", muscle:"Olympic",         sets:4, reps:null, note:"4 sets: 3 clean + 2 jerk @58.5kg — held from W38 (skipped last week)", pct:73, type:"ramp"},
+        {name:"Deadlift",             muscle:"Posterior Chain", sets:5, reps:5,    note:"5×5 @137.5kg — held from W38, no belt", pct:76, type:"fixed"},
+        {name:"GHD Hip Extension",    muscle:"Hamstrings",      sets:3, reps:12,   note:"Slow, controlled — posterior chain acc", type:"fixed"},
+        {name:"AMRAP 15 — Bike/WB/Burpee", muscle:"Conditioning", sets:1, reps:null, note:"AMRAP15: 15cal bike + 10 wall balls @9kg + 5 burpees (scale to 12cal bike if recovery is dodgy)", type:"amrap"},
+      ],
+    },
+    {
+      id:"D4", name:"Day 4 — Press + Pull", focus:["Shoulders","Back"],
+      exercises:[
+        {name:"Strict Press — Heavy 6",  muscle:"Shoulders", sets:1, reps:6, note:"Heavy 6 (target ~63–67kg) — held from W38", type:"ramp"},
+        {name:"Strict Press — Back-off", muscle:"Shoulders", sets:3, reps:6, note:"3×6 @90% of heavy 6", type:"fixed"},
+        {name:"Weighted Pull-ups",       muscle:"Back",      sets:5, reps:5, note:"5×5 @12.5–15kg added (held from W38)", type:"fixed"},
+        {name:"Toes-to-Bar",             muscle:"Core",      sets:4, reps:12, note:"Strict — anti-flexion", type:"fixed"},
+        {name:"5 Rounds — Run/KBS/Box",  muscle:"Conditioning", sets:5, reps:null, note:"5 Rds For Time: 200m run + 12 KB swings @24kg + 10 box jumps @60cm", type:"fortime"},
+      ],
+    },
+  ],
+};
+
+// ── WARMUPS & COOLDOWNS ──────────────────────────────────────────────────────
+// Keyed by day ID — each day's prep targets the day's primary movements/muscles,
+// so D1 (snatch/squat) gets OH + ankle prep while D2 (bench/press) gets scap +
+// pec prep, etc. Cooldown follows the same principle.
+
+const WARMUPS = {
+  D1: [
+    "3 min easy bike or row",
+    "Banded glute activation × 10/side",
+    "Couch stretch 30s/side",
+    "Ankle wall stretch × 10/side",
+    "PVC pass-throughs × 10",
+    "PVC OHS × 10",
+    "Empty bar snatch grip OHS × 5",
+  ],
+  D2: [
+    "3 min easy row or ski",
+    "Banded pull-aparts × 15",
+    "Wall slides × 10",
+    "Scap pushups × 10",
+    "Empty bar bench × 10",
+    "Empty bar push press × 5",
+  ],
+  D3: [
+    "3 min easy bike",
+    "Cat-cow × 10",
+    "Glute bridges × 12",
+    "Hip flexor stretch 30s/side",
+    "PVC pass-throughs × 10",
+    "Empty bar deadlift × 5",
+    "Light clean drills (high pull + power clean) × 5",
+  ],
+  D4: [
+    "3 min easy row",
+    "Banded pull-aparts × 15",
+    "Wall slides × 10",
+    "Scap pull-ups (dead hang) × 5",
+    "Empty bar strict press × 10",
+    "Build to heavy single",
+  ],
+};
+
+const COOLDOWNS = {
+  D1: [
+    "Pigeon stretch 2min/side",
+    "Couch stretch 90s/side",
+    "Hamstring doorway 60s",
+    "Ankle wall stretch 60s/side",
+    "Child's pose 2min",
+  ],
+  D2: [
+    "Doorway pec stretch 60s/side",
+    "Cross-body shoulder stretch 30s/side",
+    "Tricep overhead stretch 30s/side",
+    "T-spine extension on roller 2min",
+    "Sleeper stretch 60s/side",
+  ],
+  D3: [
+    "Pigeon 2min/side",
+    "Couch stretch 90s/side",
+    "Standing hamstring stretch 60s",
+    "Cat-cow 1min",
+    "Lying spinal twist 60s/side",
+  ],
+  D4: [
+    "Doorway pec stretch 60s/side",
+    "Kneeling lat stretch 60s/side",
+    "Pigeon 2min/side",
+    "Dead hang from bar 30s × 2",
+    "T-spine extension on roller 2min",
+  ],
 };
 
 // ── ACCESSORY BLOCKS ─────────────────────────────────────────────────────────
@@ -254,7 +367,7 @@ const WEEK_PLANS = {
 
 const ACCESSORIES = {
   D1: [
-    { name: "Hip Thrust",             muscle: "Glutes",        sets: 3, reps: 12, note: "3×12 @60kg barbell across hips (or 30–35kg DB on lap). Full glute squeeze at top. Primary glute builder, offloads lower back." },
+    { name: "Hip Thrust",             muscle: "Glutes",        sets: 3, reps: 12, note: "3×12 @62.5kg barbell across hips (or 32–35kg DB on lap). Full glute squeeze at top. Primary glute builder, offloads lower back." },
     { name: "Tibialis Raise",         muscle: "Tibialis",      sets: 3, reps: 20, note: "3×20 — wall lean or seated. Dorsiflexion. Knee health under squat volume." },
     { name: "Band External Rotation", muscle: "Rotator Cuff",  sets: 3, reps: 15, note: "3×15/side — light band (~3–5kg tension), elbow at 90°, slow and controlled. Shoulder health for snatch/OHS." },
   ],
@@ -1064,10 +1177,10 @@ function WorkoutScreen({initialWorkout,onSave,currentWeek}) {
         )}
       </div>
 
-      {/* Warmup */}
+      {/* Warmup — per-day to target the day's movements */}
       <div style={{background:"#0f0f1a",border:"1px solid #1e1e30",borderRadius:12,padding:"10px 14px",marginBottom:10}}>
-        <div style={{fontFamily:"Barlow Condensed",fontSize:11,fontWeight:700,color:"#facc15",letterSpacing:2,textTransform:"uppercase",marginBottom:5}}>⚡ Warmup — 5 min</div>
-        {["Easy bike or row","Hip circles × 10","Leg swings × 10/side","Shoulder pass-throughs × 10","PVC OHS × 10"].map(w=><div key={w} style={{fontSize:11,color:"#555",padding:"2px 0"}}>• {w}</div>)}
+        <div style={{fontFamily:"Barlow Condensed",fontSize:11,fontWeight:700,color:"#facc15",letterSpacing:2,textTransform:"uppercase",marginBottom:5}}>⚡ Warmup — 5–8 min</div>
+        {(WARMUPS[activeWorkout.id] || ["Easy bike or row 3 min","Hip circles × 10","Leg swings × 10/side","Shoulder pass-throughs × 10"]).map(w=><div key={w} style={{fontSize:11,color:"#555",padding:"2px 0"}}>• {w}</div>)}
       </div>
 
       {/* Type-aware exercise templates */}
@@ -1112,10 +1225,10 @@ function WorkoutScreen({initialWorkout,onSave,currentWeek}) {
         </div>
       )}
 
-      {/* Cooldown */}
+      {/* Cooldown — per-day to undo the day's specific loading */}
       <div style={{background:"#0f0f1a",border:"1px solid #1e1e30",borderRadius:12,padding:"10px 14px",marginBottom:14}}>
         <div style={{fontFamily:"Barlow Condensed",fontSize:11,fontWeight:700,color:"#4ade80",letterSpacing:2,textTransform:"uppercase",marginBottom:5}}>🧘 Cooldown — 10 min</div>
-        {["Pigeon stretch 2min/side","Couch stretch 90s/side","Hamstring doorway stretch 60s","Child's pose 2min","Thoracic extension on roller 2min"].map(s=><div key={s} style={{fontSize:11,color:"#555",padding:"2px 0"}}>• {s}</div>)}
+        {(COOLDOWNS[activeWorkout.id] || ["Pigeon stretch 2min/side","Couch stretch 90s/side","Hamstring doorway 60s","Child's pose 2min","T-spine extension on roller 2min"]).map(s=><div key={s} style={{fontSize:11,color:"#555",padding:"2px 0"}}>• {s}</div>)}
       </div>
     </div>
   );
