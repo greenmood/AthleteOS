@@ -36,7 +36,7 @@ const MESOS = [
   { id: 1, name: "Accumulation",    weeks: [37,38,39,40], color: "#00b4ff", desc: "Volume base. Higher reps, 70–75% Olympic, longer metcons." },
   { id: 2, name: "Intensification", weeks: [41,42,43,44], color: "#a855f7", desc: "Less volume, more intensity. 2–4 rep strength, 80–85% Olympic." },
   { id: 3, name: "Peaking",         weeks: [45,46,47,48], color: "#ff6b35", desc: "Heavy singles. Olympic PRs targeted. Short sharp metcons." },
-  { id: 4, name: "Realization",     weeks: [49,50,51,52], color: "#4ade80", desc: "W51 test week. W52 full deload. Reassess all PRs." },
+  { id: 4, name: "Realization",     weeks: [49,50,51,52], color: "#4ade80", desc: "W15 test week. W16 full deload. Reassess all PRs." },
 ];
 
 // ── PERIODIZED WORKOUTS ───────────────────────────────────────────────────────
@@ -287,6 +287,46 @@ const WEEK_PLANS = {
       ],
     },
   ],
+  40: [
+    {
+      id:"D1", name:"Day 1 — Snatch + Squat", focus:["Olympic","Legs"],
+      exercises:[
+        {name:"Hang Squat Snatch",   muscle:"Olympic",       sets:5,  reps:3,  note:"5×3 @37–39kg — W39 went 35kg; nudge up if positions feel solid. Last accumulation week.", pct:70, type:"ramp"},
+        {name:"Front Squat",         muscle:"Quads",         sets:5,  reps:6,  note:"5×6 @97.5kg — W39 was clean at 95kg, +2.5kg. Confirms working load before Meso 2 drops to 4×4.", pct:78, type:"fixed"},
+        {name:"Single-Leg RDL",      muscle:"Hamstrings",    sets:3,  reps:10, note:"3×10/side @1×20kg DB — HELD (bumped last week, hold one more)", type:"fixed"},
+        {name:"4 RFT — Run/WallBall/Pull-up", muscle:"Conditioning", sets:4, reps:null, note:"NEW — 4 Rounds For Time: 200m run + 15 wall balls @9kg + 10 strict pull-ups. (Helen-flavour; bike EMOM retired for variety.)", type:"fortime"},
+      ],
+    },
+    {
+      id:"D2", name:"Day 2 — Bench + Press", focus:["Chest","Shoulders"],
+      exercises:[
+        {name:"Bench Press — Heavy 6",  muscle:"Chest",     sets:1, reps:6,  note:"Heavy 6 — aim 105kg (W39 hit 102.5kg clean, +2.5kg)", type:"ramp"},
+        {name:"Bench Press — Back-off", muscle:"Chest",     sets:3, reps:6,  note:"3×6 @90% of heavy 6 (~94–95kg)", type:"fixed"},
+        {name:"Push Press",             muscle:"Shoulders", sets:5, reps:5,  note:"5×5 @65kg (W39 was clean at 62.5kg, +2.5kg)", pct:81, type:"fixed"},
+        {name:"DB Strict Press",        muscle:"Shoulders", sets:3, reps:12, note:"3×12 @12.5–15kg — try 15kg if last week's 12.5 was easy", type:"fixed"},
+        {name:"EMOM 20 — Ski/Box/Hollow", muscle:"Conditioning", sets:20, reps:null, note:"NEW — Min1: 15cal ski | Min2: 12 box step-overs @60cm | Min3: 20 hollow rocks | Min4: rest. (Keeps shoulders rested after pressing; Ski/TTB/Row retired.)", type:"emom"},
+      ],
+    },
+    {
+      id:"D3", name:"Day 3 — C&J + Deadlift", focus:["Olympic","Back"],
+      exercises:[
+        {name:"Clean & Jerk Complex", muscle:"Olympic",         sets:4, reps:null, note:"4 sets: 3 clean + 2 jerk @58.5kg — EXECUTE this week (held + skipped W38–39). Last accumulation rep before Meso 2 singles.", pct:73, type:"ramp"},
+        {name:"Deadlift",             muscle:"Posterior Chain", sets:5, reps:5,    note:"5×5 @137.5kg (76%) — no belt. Untested since W37; execute this week.", pct:76, type:"fixed"},
+        {name:"GHD Hip Extension",    muscle:"Hamstrings",      sets:3, reps:12,   note:"Slow, controlled — posterior chain acc", type:"fixed"},
+        {name:"AMRAP 14 — Bike/WallBall/Sit-up", muscle:"Conditioning", sets:1, reps:null, note:"NEW — AMRAP14: 15cal bike + 12 wall balls @9kg + 15 sit-ups. Kept spine-light on purpose — paired with the heavy deadlift session (lower-back flag).", type:"amrap"},
+      ],
+    },
+    {
+      id:"D4", name:"Day 4 — Press + Pull", focus:["Shoulders","Back"],
+      exercises:[
+        {name:"Strict Press — Heavy 6",  muscle:"Shoulders", sets:1, reps:6, note:"Heavy 6 (target ~63–67kg) — untested since W37; execute this week", type:"ramp"},
+        {name:"Strict Press — Back-off", muscle:"Shoulders", sets:3, reps:6, note:"3×6 @90% of heavy 6", type:"fixed"},
+        {name:"Weighted Pull-ups",       muscle:"Back",      sets:5, reps:5, note:"5×5 @12.5–15kg added (held — first real test of this load)", type:"fixed"},
+        {name:"Toes-to-Bar",             muscle:"Core",      sets:4, reps:12, note:"Strict — anti-flexion (sub v-ups if grip fries before 12)", type:"fixed"},
+        {name:"21-15-9 — Row/DB Snatch/Burpee", muscle:"Conditioning", sets:1, reps:null, note:"NEW — 21-15-9 For Time: cal row + alt DB snatch @22.5kg + burpees. (Run/KBS/Box retired for variety.)", type:"fortime"},
+      ],
+    },
+  ],
 };
 
 // ── WARMUPS & COOLDOWNS ──────────────────────────────────────────────────────
@@ -452,6 +492,17 @@ const WEEKLY_VOLUME = [
 
 function getMesoForWeek(w) { return MESOS.find(m => m.weeks.includes(w)) || MESOS[0]; }
 function getWorkoutsForWeek(w) { return WEEK_PLANS[w] || PLAN_WORKOUTS[getMesoForWeek(w).id]; }
+// Default landing week = the most recently authored week override (the last week
+// we generated prescriptions for), falling back to CURRENT_WEEK if none exist.
+function getLatestWeek() {
+  const weeks = Object.keys(WEEK_PLANS).map(Number);
+  return weeks.length ? Math.max(...weeks) : CURRENT_WEEK;
+}
+// Display label: the plan runs on calendar weeks 37–52 internally (these keys
+// drive WEEK_PLANS / MESOS / stored history), but the athlete sees them as
+// program weeks 1–16. PLAN_START_WEEK is the calendar week that maps to "Week 1".
+const PLAN_START_WEEK = 37;
+function progWeek(w) { return w - PLAN_START_WEEK + 1; }
 function fmt(d) { return new Date(d).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"2-digit"}); }
 
 // Honest duration estimate:
@@ -780,7 +831,7 @@ function PlanScreen({currentWeek}) {
     <div style={{padding:"0 16px 100px"}}>
       {/* 16-week grid */}
       <div style={{background:"#0f0f1a",border:"1px solid #1e1e30",borderRadius:12,padding:16,marginBottom:20}}>
-        <div style={{fontFamily:"Barlow Condensed",fontSize:11,fontWeight:700,color:"#888",letterSpacing:2,textTransform:"uppercase",marginBottom:6}}>16-Week Plan · W37 → W52</div>
+        <div style={{fontFamily:"Barlow Condensed",fontSize:11,fontWeight:700,color:"#888",letterSpacing:2,textTransform:"uppercase",marginBottom:6}}>16-Week Plan · W1 → W16</div>
         <div style={{fontFamily:"Barlow",fontSize:11,color:"#666",marginBottom:14}}>Priority: Recomposition → Olympic → Strength → Conditioning</div>
         <div style={{display:"grid",gridTemplateColumns:"repeat(16,1fr)",gap:3,marginBottom:12}}>
           {Array.from({length:16},(_,i)=>{
@@ -790,7 +841,7 @@ function PlanScreen({currentWeek}) {
                 background:isCur?meso.color:isPast?`${meso.color}33`:`${meso.color}18`,
                 border:isCur?`2px solid ${meso.color}`:"1px solid transparent"}}>
                 <span style={{fontFamily:"Barlow Condensed",fontSize:8,fontWeight:800,color:isCur?"#000":meso.color,lineHeight:1}}>
-                  {w===51?"🏆":`W${w}`}
+                  {w===51?"🏆":`W${progWeek(w)}`}
                 </span>
               </div>
             );
@@ -824,7 +875,7 @@ function PlanScreen({currentWeek}) {
                       {isActive&&<span style={{fontSize:9,padding:"2px 6px",background:`${meso.color}22`,color:meso.color,borderRadius:4,fontFamily:"Barlow Condensed",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>ACTIVE</span>}
                       {isPast&&<span style={{fontSize:9,padding:"2px 6px",background:"#ffffff11",color:"#555",borderRadius:4,fontFamily:"Barlow Condensed",fontWeight:700,letterSpacing:1,textTransform:"uppercase"}}>DONE</span>}
                     </div>
-                    <div style={{fontFamily:"Barlow Condensed",fontSize:11,color:"#666"}}>W{meso.weeks[0]}–W{meso.weeks[meso.weeks.length-1]} · {meso.desc}</div>
+                    <div style={{fontFamily:"Barlow Condensed",fontSize:11,color:"#666"}}>W{progWeek(meso.weeks[0])}–W{progWeek(meso.weeks[meso.weeks.length-1])} · {meso.desc}</div>
                   </div>
                 </div>
                 <span style={{color:meso.color,fontSize:16}}>{isOpen?"▲":"▼"}</span>
@@ -890,7 +941,7 @@ function Dashboard({history,onStartWorkout,currentWeek}) {
       <div style={{background:`linear-gradient(135deg,${meso.color}18,${meso.color}06)`,border:`1px solid ${meso.color}33`,borderRadius:12,padding:"14px 18px",marginBottom:20}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
           <div>
-            <div style={{fontSize:11,color:meso.color,fontFamily:"Barlow Condensed",fontWeight:700,letterSpacing:2,textTransform:"uppercase"}}>Meso {meso.id} — {meso.name} · W{currentWeek}</div>
+            <div style={{fontSize:11,color:meso.color,fontFamily:"Barlow Condensed",fontWeight:700,letterSpacing:2,textTransform:"uppercase"}}>Meso {meso.id} — {meso.name} · W{progWeek(currentWeek)}</div>
             <div style={{fontSize:11,color:"#666",marginTop:2}}>{meso.desc}</div>
           </div>
           <span style={{fontSize:9,padding:"3px 8px",background:`${meso.color}22`,color:meso.color,borderRadius:20,fontFamily:"Barlow Condensed",fontWeight:700,letterSpacing:1,textTransform:"uppercase",whiteSpace:"nowrap"}}>W{meso.weeks[0]}–{meso.weeks[meso.weeks.length-1]}</span>
@@ -911,7 +962,7 @@ function Dashboard({history,onStartWorkout,currentWeek}) {
         ))}
       </div>
       <div style={{marginBottom:20}}>
-        <div style={{fontFamily:"Barlow Condensed",fontSize:12,fontWeight:700,color:"#888",letterSpacing:2,textTransform:"uppercase",marginBottom:12}}>W{currentWeek} Workouts</div>
+        <div style={{fontFamily:"Barlow Condensed",fontSize:12,fontWeight:700,color:"#888",letterSpacing:2,textTransform:"uppercase",marginBottom:12}}>W{progWeek(currentWeek)} Workouts</div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
           {workouts.map(w=>(
             <button key={w.id} onClick={()=>onStartWorkout(w)} style={{background:"#0f0f1a",border:"1px solid #1e1e30",borderRadius:12,padding:14,textAlign:"left",cursor:"pointer"}}
@@ -1111,7 +1162,7 @@ function WorkoutScreen({initialWorkout,onSave,currentWeek}) {
 
   if(!activeWorkout) return (
     <div style={{padding:"0 16px 100px"}}>
-      <div style={{fontFamily:"Barlow Condensed",fontSize:11,color:meso.color,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>W{currentWeek} — {meso.name}</div>
+      <div style={{fontFamily:"Barlow Condensed",fontSize:11,color:meso.color,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>W{progWeek(currentWeek)} — {meso.name}</div>
       <div style={{color:"#666",fontSize:13,marginBottom:20}}>Select a workout to begin.</div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
         {weekWorkouts.map(w=>(
@@ -1238,12 +1289,12 @@ function WorkoutScreen({initialWorkout,onSave,currentWeek}) {
 
 function generateWeekExport(history, week) {
   const sessions = history.filter(h => h.week === week);
-  if (!sessions.length) return `No sessions logged for W${week}.`;
+  if (!sessions.length) return `No sessions logged for W${progWeek(week)}.`;
 
   const allWorkouts = Object.values(PLAN_WORKOUTS).flat();
   const meso = getMesoForWeek(week);
 
-  let out = `=== W${week} TRAINING LOG — ${meso.name.toUpperCase()} ===\n`;
+  let out = `=== W${progWeek(week)} TRAINING LOG — ${meso.name.toUpperCase()} ===\n`;
   out += `Mesocycle ${meso.id} of 4 · ${sessions.length} sessions logged\n\n`;
 
   sessions.forEach(h => {
@@ -1286,7 +1337,7 @@ function generateWeekExport(history, week) {
     out += "\n";
   });
 
-  out += `=== PASTE THIS TO CLAUDE FOR W${week+1} PROGRESSION ===`;
+  out += `=== PASTE THIS TO CLAUDE FOR W${progWeek(week+1)} PROGRESSION ===`;
   return out;
 }
 
@@ -1295,7 +1346,7 @@ function generateWeekExport(history, week) {
 function HistoryScreen({history, onDelete, onImport}) {
   const allWorkouts=Object.values(PLAN_WORKOUTS).flat();
   const [confirmId, setConfirmId] = useState(null);
-  const [exportWeek, setExportWeek] = useState(CURRENT_WEEK);
+  const [exportWeek, setExportWeek] = useState(getLatestWeek());
   const [exportText, setExportText] = useState(null);
   const [copied, setCopied] = useState(false);
   const fileInputRef = useRef(null);
@@ -1365,7 +1416,7 @@ function HistoryScreen({history, onDelete, onImport}) {
         <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:10}}>
           <div style={{display:"flex",alignItems:"center",gap:4,background:"#13131f",border:"1px solid #2a2a3e",borderRadius:8,padding:"4px 10px"}}>
             <button onClick={()=>setExportWeek(w=>Math.max(37,w-1))} style={{background:"none",border:"none",color:"#888",cursor:"pointer",fontSize:14,lineHeight:1}}>‹</button>
-            <span style={{fontFamily:"Barlow Condensed",fontSize:13,fontWeight:700,color:"#ccc",minWidth:32,textAlign:"center"}}>W{exportWeek}</span>
+            <span style={{fontFamily:"Barlow Condensed",fontSize:13,fontWeight:700,color:"#ccc",minWidth:32,textAlign:"center"}}>W{progWeek(exportWeek)}</span>
             <button onClick={()=>setExportWeek(w=>Math.min(52,w+1))} style={{background:"none",border:"none",color:"#888",cursor:"pointer",fontSize:14,lineHeight:1}}>›</button>
           </div>
           <button onClick={handleExport} style={{flex:1,background:"linear-gradient(135deg,#00b4ff,#0070cc)",border:"none",borderRadius:8,color:"#fff",fontFamily:"Barlow Condensed",fontSize:12,fontWeight:800,letterSpacing:2,padding:"10px",cursor:"pointer"}}>
@@ -1412,7 +1463,7 @@ function HistoryScreen({history, onDelete, onImport}) {
                       </div>
                   }
                 </div>
-                {h.week&&<span style={{fontFamily:"Barlow Condensed",fontSize:9,color:"#555"}}>W{h.week}</span>}
+                {h.week>=PLAN_START_WEEK&&<span style={{fontFamily:"Barlow Condensed",fontSize:9,color:"#555"}}>W{progWeek(h.week)}</span>}
               </div>
             </div>
             <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
@@ -1611,7 +1662,7 @@ function App() {
   const [tab,setTab]=useState("dashboard");
   const [history,setHistory]=useState(null); // null = still loading from IDB
   const [activeWorkout,setActiveWorkout]=useState(null);
-  const [currentWeek,setCurrentWeek]=useState(CURRENT_WEEK);
+  const [currentWeek,setCurrentWeek]=useState(getLatestWeek());
   const meso=getMesoForWeek(currentWeek);
 
   // One-shot async load (with localStorage migration on first run)
@@ -1669,13 +1720,13 @@ function App() {
           <div>
             <div style={{fontFamily:"Barlow Condensed",fontSize:22,fontWeight:900,color:"#fff",letterSpacing:1,lineHeight:1}}>ATHLETE<span style={{color:"#00b4ff"}}>OS</span></div>
             <div style={{fontSize:10,color:"#888",fontFamily:"Barlow Condensed",letterSpacing:2,textTransform:"uppercase"}}>
-              <span style={{color:meso.color}}>{meso.name}</span> · W{currentWeek} · 93→90kg
+              <span style={{color:meso.color}}>{meso.name}</span> · W{progWeek(currentWeek)} · 93→90kg
             </div>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             <div style={{display:"flex",alignItems:"center",gap:4,background:"#0f0f1a",border:"1px solid #1e1e30",borderRadius:8,padding:"4px 8px"}}>
               <button onClick={()=>setCurrentWeek(w=>Math.max(37,w-1))} style={{background:"none",border:"none",color:"#888",cursor:"pointer",fontSize:14,lineHeight:1,padding:"0 2px"}}>‹</button>
-              <span style={{fontFamily:"Barlow Condensed",fontSize:12,fontWeight:700,color:"#ccc",minWidth:28,textAlign:"center"}}>W{currentWeek}</span>
+              <span style={{fontFamily:"Barlow Condensed",fontSize:12,fontWeight:700,color:"#ccc",minWidth:28,textAlign:"center"}}>W{progWeek(currentWeek)}</span>
               <button onClick={()=>setCurrentWeek(w=>Math.min(52,w+1))} style={{background:"none",border:"none",color:"#888",cursor:"pointer",fontSize:14,lineHeight:1,padding:"0 2px"}}>›</button>
             </div>
             <div style={{width:32,height:32,borderRadius:"50%",background:`linear-gradient(135deg,${meso.color},${meso.color}88)`,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"Barlow Condensed",fontWeight:900,fontSize:13,color:"#000"}}>CF</div>
