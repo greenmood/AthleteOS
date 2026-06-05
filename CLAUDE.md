@@ -16,7 +16,7 @@ A CrossFit training tracker PWA built for a specific athlete. All workouts, prog
 | Goal | Body recomposition — retain muscle, lose fat |
 | Timeline | Sustainable long-term |
 | Training | 4×/week CrossFit, ~3 years experience |
-| Lower back | Occasional sensitivity — flag high deadlift + metcon volume combinations |
+| Lower back | Occasional sensitivity. **Flag downgraded 2026-06-05** — athlete is comfortable with a heavy D3 (loads + conditioning). Only avoid one combo: heavy (>80% 1RM) deadlift work AND a deadlift/heavy-hinge-dominant metcon in the same session. |
 
 ### Strength PRs (baseline)
 | Lift | Weight | Date |
@@ -97,7 +97,7 @@ When the athlete pastes a weekly export (generated from History → Export Week)
 - **Accessories:** +2.5kg every 2 weeks when top of rep range is easy
 - If any set was missed or form broke down → hold weight, don't progress
 
-**Lower back flag:** If D3 has heavy deadlift (>80% 1RM) AND a high-volume metcon in the same session, note it. Consider moving the metcon to after accessories or replacing with a shorter piece.
+**Lower back flag (relaxed 2026-06-05):** Athlete is comfortable with a heavy D3. Program D3 normally — do NOT auto-shorten or neuter the metcon. The only combo to still avoid: heavy (>80% 1RM) deadlift work AND a deadlift- or heavy-hinge-dominant metcon in the same session (double max spinal loading). Engine/squat/press/gymnastics-based metcons on heavy-deadlift days are fine.
 
 ---
 
@@ -125,7 +125,7 @@ Every metcon mixes **2–3** of the three CrossFit modalities — never single-m
 
 ### Axis 4 — Don't redline the day's lift (antagonist pairing)
 The metcon must not re-hammer the muscle group the day's strength work just trained.
-- **D3 (heavy deadlift + lower-back flag):** NO heavy posterior-chain pulling in the metcon. Use bike/row + gymnastics. Honour the lower-back flag in the Progression Protocol.
+- **D3 (heavy deadlift day):** the metcon may be beefy — athlete is fine with a hard D3 (flag relaxed 2026-06-05). Just don't make it *another* max-spinal-load deadlift/heavy-hinge piece on top of the heavy pulls — favour engine + thrusters/wall balls/squats/gymnastics over more deadlifts or heavy swings.
 - **D1 (front squat):** avoid heavy squatting/wall-ball volume; favour upper-body + monostructural.
 - **D2 (bench/push press):** avoid heavy pressing volume; favour pulling + lower/cardio.
 - **D4 (pull + strict press):** avoid more vertical pulling/pressing; favour lower + cardio + core.

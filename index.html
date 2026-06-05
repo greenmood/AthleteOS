@@ -327,6 +327,46 @@ const WEEK_PLANS = {
       ],
     },
   ],
+  41: [
+    {
+      id:"D1", name:"Day 1 — Snatch + Squat", focus:["Olympic","Legs"],
+      exercises:[
+        {name:"Squat Snatch",        muscle:"Olympic",       sets:5,  reps:2,  note:"5×2 — build to 42.5kg (85% of 50kg). W40 hit hang snatch 37.5×3 clean; Meso 2 moves to full squat snatch, heavier + lower reps. Start 40kg, add to 42.5 if positions hold.", pct:85, type:"ramp"},
+        {name:"Front Squat",         muscle:"Quads",         sets:4,  reps:4,  note:"4×4 @100kg (80% of 125kg max). W40 clean 5×6 @97.5 → +2.5kg, reps 6→4. Should feel easy at 4 reps — that's intended; we climb +2.5/week through Meso 2.", pct:80, type:"fixed"},
+        {name:"Single-Leg RDL",      muscle:"Hamstrings",    sets:3,  reps:10, note:"3×10/side @1×22.5kg DB — W40 completed all 3 sets clean at 20kg, +2.5kg.", type:"fixed"},
+        {name:"21-15-9 — Row/Burpee", muscle:"Conditioning", sets:1, reps:null, note:"NEW — 21-15-9 For Time: cal row + burpees-over-rower. Sprint piece (~6–8min) — spares the squatted quads, NO pull-ups (W40 metcon limiter). Target sub-7:00.", type:"fortime"},
+      ],
+    },
+    {
+      id:"D2", name:"Day 2 — Bench + Press", focus:["Chest","Shoulders"],
+      exercises:[
+        {name:"Bench Press — Heavy 4",  muscle:"Chest",     sets:1, reps:4,  note:"Heavy 4 — aim 107.5kg. W40 got 105kg×4 on the 'Heavy 6' (couldn't get 6) — that IS your heavy-4 baseline. Meso 2 formalises it; beat 105×4.", type:"ramp"},
+        {name:"Bench Press — Back-off", muscle:"Chest",     sets:3, reps:4,  note:"3×4 @~97.5kg (90% of heavy 4). Reps 6→4, load up from W40's 95kg.", type:"fixed"},
+        {name:"Push Press",             muscle:"Shoulders", sets:5, reps:3,  note:"5×3 @67.5kg (~84%). W40 was clean 5×5 @65 — Meso 2 reps 5→3, +2.5kg.", pct:84, type:"fixed"},
+        {name:"DB Strict Press",        muscle:"Shoulders", sets:3, reps:10, note:"3×10 @17.5kg — W40 cleared 15kg×12; reps down, load up.", type:"fixed"},
+        {name:"AMRAP 12 — Run/KBS/Sit-up", muscle:"Conditioning", sets:1, reps:null, note:"NEW — AMRAP12: 200m run + 12 KB swings @24kg + 15 sit-ups. Lower + cardio + core — spares the pressed shoulders. (EMOM Ski/Box/Hollow retired; you flagged ski felt brutal at the end.)", type:"amrap"},
+      ],
+    },
+    {
+      id:"D3", name:"Day 3 — C&J + Deadlift", focus:["Olympic","Back"],
+      exercises:[
+        {name:"Clean & Jerk Complex", muscle:"Olympic",         sets:4, reps:null, note:"4 sets: 2 clean + 1 jerk @60kg (75% of 80kg baseline). W40 executed 57.5kg → +2.5kg. Technical lift — build clean reps; only chase higher once 60 feels crisp.", pct:75, type:"ramp"},
+        {name:"Deadlift",             muscle:"Posterior Chain", sets:5, reps:3,    note:"5×3 @140kg (78%) — no belt. W40 clean 5×5 @137.5 → +2.5kg, reps 5→3. Deliberately conservative restart after the W38–39 gap; +2.5/week from here.", pct:78, type:"fixed"},
+        {name:"GHD Hip Extension",    muscle:"Hamstrings",      sets:3, reps:12,   note:"Slow, controlled — posterior chain acc.", type:"fixed"},
+        {name:"3 RFT — Bike/Thruster/DU", muscle:"Conditioning", sets:3, reps:null, note:"3 Rounds For Time: 15 cal bike + 12 thrusters @40kg + 30 double-unders. Target ~12–14:00. Beefed up at athlete's request (back flag relaxed 2026-06-05). Thrusters over deadlift/heavy-hinge — a real engine piece without stacking max spinal load on top of the 5×3 @145 deadlifts. Annie (W40: 9:39) parked for a later retest.", type:"fortime"},
+      ],
+    },
+    {
+      id:"D4", name:"Day 4 — Press + Pull", focus:["Shoulders","Back"],
+      exercises:[
+        {name:"Strict Press — Heavy 4",  muscle:"Shoulders", sets:1, reps:4, note:"Heavy 4 — aim ~67–70kg. ⚠️ UNTESTED since W37 (skipped W38–40). Build conservatively, find a true heavy 4, log it — this sets the Meso 2 baseline.", type:"ramp"},
+        {name:"Strict Press — Back-off", muscle:"Shoulders", sets:3, reps:4, note:"3×4 @90% of today's heavy 4.", type:"fixed"},
+        {name:"Weighted Pull-ups",       muscle:"Back",      sets:5, reps:3, note:"5×3 @17.5kg added — also untested since W37. Reps 5→3, slight load bump; back off to 15kg if reps 3 isn't clean. Strength here fixes the metcon pull-up limiter.", type:"fixed"},
+        {name:"Toes-to-Bar",             muscle:"Core",      sets:4, reps:12, note:"Strict — anti-flexion (sub v-ups if grip fries before 12).", type:"fixed"},
+        {name:"4 RFT — Ski/Box/Lunge",   muscle:"Conditioning", sets:4, reps:null, note:"NEW — 4 Rounds For Time: 250m ski + 12 box jump-overs @60cm + 20 walking lunges (10/leg). Lower + cardio grind, spares fried lats/grip/shoulders. Target ~13–14:00. (Uses ski so all 4 machines rotate across the week: row/run/bike/ski.)", type:"fortime"},
+      ],
+    },
+  ],
 };
 
 // ── WARMUPS & COOLDOWNS ──────────────────────────────────────────────────────
@@ -417,7 +457,7 @@ const ACCESSORIES = {
     { name: "Tricep Pushdown",muscle: "Triceps",    sets: 3, reps: 15, note: "3×15 @20kg cable (or medium band), elbows locked at sides. Direct tricep volume." },
   ],
   D3: [
-    { name: "Hip Thrust — Heavy",    muscle: "Glutes",    sets: 4, reps: 10, note: "4×10 @85kg barbell across hips. Heavier than D1 (60kg). Primary posterior chain isolation." },
+    { name: "Bulgarian Split Squat", muscle: "Glutes / Quads", sets: 3, reps: 10, note: "3×10/leg @2×16–20kg DBs, rear foot on bench. Replaces the 2nd weekly hip thrust (you already hit it on D1) — unilateral glute/quad with no extra spinal load after the deadlifts." },
     { name: "Banded Hamstring Curl", muscle: "Hamstrings", sets: 3, reps: 15, note: "3×15 @25kg machine (prone or seated) — or heavy band if no machine. Direct hamstring isolation missing from program." },
     { name: "Calf Raise",            muscle: "Calves",    sets: 4, reps: 20, note: "4×20 @2×15kg DBs (or single-leg bodyweight if no DBs). Slow 3s eccentric. Knee + ankle health under squat load." },
   ],
