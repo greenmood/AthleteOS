@@ -101,6 +101,47 @@ When the athlete pastes a weekly export (generated from History → Export Week)
 
 ---
 
+## Metcon Generation Methodology
+
+The strength/Olympic work is fixed by the plan above. **The metcon is the one part generated fresh each week** — and it must follow real CrossFit "constantly varied" principles, NOT improvised triplets. Every metcon is built against the 4-axis checklist below. The goal: variety, recognizable stimulus, and a real score to beat.
+
+### Axis 1 — Time domain (energy system)
+Rotate deliberately. **Never run the same domain two metcons in a row**, and cover at least 2–3 different domains across the week.
+
+| Domain | Length | Stimulus | Benchmark examples |
+|---|---|---|---|
+| Sprint | < 8 min | Glycolytic, redline | Fran, Grace, Isabel |
+| Medium | 8–15 min | Mixed | Helen, DT, Jackie |
+| Grind | 15–25+ min | Aerobic | Cindy, Annie, Chelsea |
+
+### Axis 2 — Structure
+Pick a structure that fits the chosen domain. Rotate across: **AMRAP · For Time (RFT) · EMOM · intervals · chipper**. Couplets (2 movements) suit sprints; chippers (5+ movements) suit grinds.
+
+### Axis 3 — Modality balance (M/G/W)
+Every metcon mixes **2–3** of the three CrossFit modalities — never single-modality:
+- **M** onostructural (cardio): row, bike (cal), ski, run (m), double-unders
+- **G** ymnastics: C2B pull-ups, T2B, burpees, box jumps, HSPU, ring dips
+- **W** eightlifting: cleans, snatches, thrusters, wall balls, KB swings, DB
+
+### Axis 4 — Don't redline the day's lift (antagonist pairing)
+The metcon must not re-hammer the muscle group the day's strength work just trained.
+- **D3 (heavy deadlift + lower-back flag):** NO heavy posterior-chain pulling in the metcon. Use bike/row + gymnastics. Honour the lower-back flag in the Progression Protocol.
+- **D1 (front squat):** avoid heavy squatting/wall-ball volume; favour upper-body + monostructural.
+- **D2 (bench/push press):** avoid heavy pressing volume; favour pulling + lower/cardio.
+- **D4 (pull + strict press):** avoid more vertical pulling/pressing; favour lower + cardio + core.
+
+### Benchmark anchoring & retest cadence
+- Drop in **named benchmark WODs** (Fran, Helen, Annie, DT, Grace, Cindy…) scaled to the athlete's working maxes whenever one fits the chosen domain — they give a recognizable standard and retest value.
+- **Repeat a metcon every 4–8 weeks to measure progress** — never the same shape week to week. A repeat is for retesting a score, not for filling a slot. This is what feeds the "beat the last score" rule in the Progression Protocol.
+
+### Hard constraints (always)
+- **No bar muscle-ups** — sub C2B pull-ups or ring dips.
+- **Metric only** — cal, m, kg. No imperial.
+- Scale loads from the **Current Working Maxes** table, not the PR table.
+- Respect the **90–120 min** session target — the metcon sits inside that budget alongside strength + accessories.
+
+---
+
 ## File Structure
 
 ```
