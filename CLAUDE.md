@@ -90,12 +90,19 @@ When the athlete pastes a weekly export (generated from History → Export Week)
 
 **Meso 1 → 2 (W40→41):** Drop volume by ~20%, increase intensity. Move from heavy 6 to heavy 4 on bench/press. Olympic % jumps from 75% to 85%.
 
-**Within a meso (week to week):**
-- **Olympic lifts:** +2.5kg on ramp sets if all sets completed cleanly
-- **Strength compounds (fixed):** +2.5kg if all sets completed at prescribed reps
-- **Conditioning:** note the score, aim to beat it next time the WOD repeats
-- **Accessories:** +2.5kg every 2 weeks when top of rep range is easy
-- If any set was missed or form broke down → hold weight, don't progress
+**Within a meso (week to week) — double progression for all fixed-rep work:**
+
+Weight and reps never move in the same step. Every fixed-rep prescription (strength compounds and accessories) is given as a **rep range** (e.g. 6–8), not a single number:
+- Each week, add a rep to the sets that haven't yet hit the top of the range (hardest/earliest sets first), holding weight constant.
+- Once **all sets** hit the top of the range cleanly, the *next* week jumps weight **+2.5kg** and resets every set back to the **bottom** of the range.
+- Weight and reps are never both bumped in the same week — a rep increase week never carries a weight increase, and a weight-increase week always resets reps down.
+
+By exercise category:
+- **Olympic lifts (ramp sets):** exempt from double progression — these build to a heavy single/complex, so +2.5kg on the ramp top if all sets were completed cleanly still applies directly.
+- **Strength compounds (fixed):** apply double progression as above. E.g. prescribed "5×6" means rep range 6–8 at the given weight; climb 6→7→8 across sets/weeks before the next +2.5kg jump resets to 5×6.
+- **Conditioning:** note the score, aim to beat it next time the WOD repeats.
+- **Accessories:** apply double progression as above (this was already the intended behavior — rep range, not a fixed number).
+- If any set was missed or form broke down → hold at the current weight/rep step, don't progress either dimension.
 
 **Lower back flag (relaxed 2026-06-05):** Athlete is comfortable with a heavy D3. Program D3 normally — do NOT auto-shorten or neuter the metcon. The only combo to still avoid: heavy (>80% 1RM) deadlift work AND a deadlift- or heavy-hinge-dominant metcon in the same session (double max spinal loading). Engine/squat/press/gymnastics-based metcons on heavy-deadlift days are fine.
 

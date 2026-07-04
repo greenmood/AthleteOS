@@ -13,7 +13,9 @@
       "Bash(node -e ' *)",
       "Bash(rtk grep *)",
       "Bash(rtk curl *)",
-      "Bash(rtk git *)"
+      "Bash(rtk git *)",
+      "Bash(node *)",
+      "Bash(curl -sL -o /dev/null -w \"%{http_code} %{size_download}b %{url_effective}\\\\n\" \"https://unpkg.com/@babel/standalone/babel.min.js\")"
     ]
   }
 }
