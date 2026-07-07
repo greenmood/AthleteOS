@@ -407,7 +407,55 @@ const WEEK_PLANS = {
       ],
     },
   ],
+  44: [
+    {
+      id:"D1", name:"Day 1 — Snatch + Squat", focus:["Olympic","Legs"],
+      exercises:[
+        {name:"Squat Snatch",        muscle:"Olympic",       sets:5,  reps:2,  note:"5×2 — build to 45kg (+2.5 from W43's 42.5kg, no failure noted — logged as a single top weight so treating it as clean). Ramp — exempt from double progression.", pct:85, type:"ramp"},
+        {name:"Front Squat",         muscle:"Quads",         sets:4,  reps:5,  note:"4×5 @102.5kg — W43 was 4/4 sets clean @102.5kg. Double progression: hold weight, climb 4→5 reps.", pct:80, type:"fixed"},
+        {name:"Single-Leg RDL",      muscle:"Hamstrings",    sets:3,  reps:11, note:"3×11/side @22.5kg — W43 was 3/3 clean. Double progression: hold weight, climb 10→11 reps.", type:"fixed"},
+        {name:"15-12-9 — Row/DB Snatch", muscle:"Conditioning", sets:1, reps:null, note:"15-12-9 For Time: cal row + alt DB snatch @20kg. Sprint domain (~5–7min) — different from last week's Medium EMOM and D1's own Grind 3RFT (15:14, T2B was the limiter). No squat/wall-ball volume (D1 antagonist rule).", type:"fortime"},
+      ],
+    },
+    {
+      id:"D2", name:"Day 2 — Bench + Press", focus:["Chest","Shoulders"],
+      exercises:[
+        {name:"Bench Press — Heavy 4",  muscle:"Chest",     sets:1, reps:4, note:"Heavy 4 — retest ~105kg. W43's 110kg attempt FAILED (only 1 rep, not 4) and the back-off also failed (1/3 sets @100kg) — that jump was too aggressive. Dropping back near W40's last fully-clean number (105kg×4) to rebuild a real heavy-4, not chase the failed number.", type:"ramp"},
+        {name:"Bench Press — Back-off", muscle:"Chest",     sets:3, reps:4, note:"3×4 @92.5kg — conservative back-off given last week's back-off also failed. Get all 3 sets clean this time.", type:"fixed"},
+        {name:"Push Press",             muscle:"Shoulders", sets:5, reps:4, note:"5×4 @70kg — W43 was 5/5 clean @70kg (reps 3). Double progression: hold weight, climb 3→4 reps.", pct:84, type:"fixed"},
+        {name:"DB Strict Press",        muscle:"Shoulders", sets:3, reps:11, note:"3×11 @17.5kg — W43 was 3/3 clean. Double progression: hold weight, climb 10→11 reps.", type:"fixed"},
+        {name:"AMRAP 14 — Run/KBS/Pull-up", muscle:"Conditioning", sets:1, reps:null, note:"AMRAP14: 200m run + 12 KB swings @24kg + 6 strict pull-ups. Medium domain, different from last week's Sprint 21-15-9 (10:37). Favors pulling + lower/cardio over more pressing (D2 antagonist rule); pull-ups kept low-rep given the known metcon limiter.", type:"amrap"},
+      ],
+    },
+    {
+      id:"D3", name:"Day 3 — C&J + Deadlift", focus:["Olympic","Back"],
+      exercises:[
+        {name:"Clean & Jerk Complex", muscle:"Olympic",         sets:4, reps:null, note:"4 sets: 2 clean + 1 jerk @62.5kg (+2.5 from W43's 60kg×3, no failure noted — moving up since 60kg looked clean).", pct:78, type:"ramp"},
+        {name:"Deadlift",             muscle:"Posterior Chain", sets:5, reps:4,    note:"5×4 @142.5kg — W43 was 5/5 clean @142.5kg (reps 3). Double progression: hold weight, climb 3→4 reps.", pct:79, type:"fixed"},
+        {name:"GHD Hip Extension",    muscle:"Hamstrings",      sets:3, reps:12,   note:"3×12, bodyweight — hold. W43 done bodyweight; add light load once this feels easy for all 3 sets.", type:"fixed"},
+        {name:"AMRAP 18 — Wall Ball/Box/T2B", muscle:"Conditioning", sets:1, reps:null, note:"AMRAP18: 15 wall balls @9kg + 10 box step-overs @60cm + 12 T2B. Heavy D3 is fine (back flag relaxed) — favors squat/gymnastics over more hinge on top of today's deadlifts. Grind domain — Cindy variant (W43: 9 rds+3) parked for a later retest rather than repeating it back-to-back.", type:"amrap"},
+      ],
+    },
+    {
+      id:"D4", name:"Day 4 — Press + Pull", focus:["Shoulders","Back"],
+      exercises:[
+        {name:"Strict Press",           muscle:"Shoulders", sets:3, reps:6, note:"3×6 @60kg. Comeback session (2026-07-04) hit build + back-off both clean at 60kg×5 — that's the real number now (old 72.5kg estimate is dead). Double progression: hold weight, climb 5→6 reps.", type:"fixed"},
+        {name:"Weighted Pull-ups",      muscle:"Back",      sets:3, reps:6, note:"3×6 @10kg. Comeback session hit build + back-off clean at 10kg×5 (build ramp stopped there, not pushed further). Double progression: hold weight, climb 5→6 reps.", type:"fixed"},
+        {name:"Face Pull",              muscle:"Shoulders", sets:3, reps:15, note:"Got skipped entirely last session (0/3 sets) — prioritize it this time, do it before you run out of steam.", type:"fixed"},
+        {name:"3 RFT — Row/KBS/Box",    muscle:"Conditioning", sets:3, reps:null, note:"3 Rounds For Time: 300m row + 15 KB swings @24kg + 12 box jumps @60cm. Medium domain, different from last session's Medium EMOM and this week's Grind D3 — no more vertical pull/press after today's lifts (D4 antagonist rule).", type:"fortime"},
+      ],
+    },
+  ],
 };
+
+// ── W44 FALLBACK: only 3 sessions fit this week ──────────────────────────────
+// If the full week doesn't happen, cut D4 as a standalone day and fold its two
+// priority lifts (Strict Press, Weighted Pull-ups — the chronically-skipped
+// D4 work) into the END of D2, after Push Press/DB Strict Press. Same
+// weights/reps as the D4 block above (3×6 @60kg, 3×6 @10kg), but skip the
+// separate ramp/build — you already know the weight, just load and go.
+// Drop D4's Face Pull and metcon entirely in this fallback; do D1 and D3 as
+// programmed. Priority order if even that's tight: D1 > D3 > D2(+D4 lifts).
 
 // ── WARMUPS & COOLDOWNS ──────────────────────────────────────────────────────
 // Keyed by day ID — each day's prep targets the day's primary movements/muscles,

@@ -1,5 +1,5 @@
 // Bump CACHE on every release so old shells don't survive a deploy.
-const CACHE = "athleteos-v5";
+const CACHE = "athleteos-v6";
 
 self.addEventListener("install", e => {
   e.waitUntil(
